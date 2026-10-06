@@ -1,0 +1,138 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Sales</span>
+      <h1>Sales</h1>
+      <p>{{ isAdmin() ? 'All sales across your sellers.' : 'Your sales.' }}</p>
+    </div>
+    <a routerLink="/sales/new" class="btn btn-primary">
+      <app-icon name="plus" [size]="16" />
+      New sale
+    </a>
+  </header>
+
+  @if (notice(); as message) {
+    <div class="alert success notice" role="status">
+      <app-icon name="check" />
+      <span>{{ message }}</span>
+      <button type="button" class="icon-btn dismiss" (click)="notice.set(null)" aria-label="Dismiss">
+        <app-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+
+  <section class="card">
+    <div class="toolbar">
+      <div class="control compact search">
+        <app-icon name="search" />
+        <label for="sales-search" class="sr-only">Search sales</label>
+        <input
+          id="sales-search"
+          type="search"
+          placeholder="Search by sale, customer, seller or product"
+          [value]="query()"
+          (input)="query.set($any($event.target).value)"
+        />
+      </div>
+      @if (!loading() && !error()) {
+        <p class="summary">
+          {{ filtered().length }} {{ filtered().length === 1 ? 'sale' : 'sales' }} ·
+          <strong>{{ total() | currency: currency }}</strong>
+        </p>
+      }
+    </div>
+
+    @if (loading()) {
+      <div class="state" role="status"><span class="spinner"></span> Loading sales…</div>
+    } @else if (error()) {
+      <div class="state">
+        <div class="alert error" role="alert"><app-icon name="alert" /> {{ error() }}</div>
+        <button type="button" class="btn btn-secondary" (click)="load()">Try again</button>
+      </div>
+    } @else if (filtered().length === 0) {
+      <div class="state">
+        @if (query()) {
+          <p class="muted">No sales match “{{ query() }}”.</p>
+        } @else {
+          <p class="muted">No sales yet.</p>
+          <a routerLink="/sales/new" class="btn btn-primary">Create the first sale</a>
+        }
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Sale</th>
+              <th scope="col">Date</th>
+              <th scope="col">Customer</th>
+              @if (isAdmin()) {
+                <th scope="col">Seller</th>
+              }
+              <th scope="col">Products</th>
+              <th scope="col" class="num">Total</th>
+              <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of filtered(); track sale.id) {
+              <tr>
+                <td class="id">#{{ sale.id }}</td>
+                <td class="nowrap">{{ sale.saleDate | date: 'MMM d, y' }}</td>
+                <td>{{ sale.customer.name }}</td>
+                @if (isAdmin()) {
+                  <td>{{ sale.seller.name }}</td>
+                }
+                <td class="products" [title]="productSummary(sale)">{{ productSummary(sale) }}</td>
+                <td class="num total">{{ sale.totalAmount | currency: currency }}</td>
+                <td class="actions">
+                  <a [routerLink]="['/sales', sale.id, 'edit']" class="icon-btn" [attr.aria-label]="'Edit sale #' + sale.id">
+                    <app-icon name="pencil" [size]="16" />
+                  </a>
+                  <button
+                    type="button"
+                    class="icon-btn danger"
+                    (click)="askDelete(sale)"
+                    [attr.aria-label]="'Delete sale #' + sale.id"
+                  >
+                    <app-icon name="trash" [size]="16" />
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</div>
+
+@if (toDelete(); as sale) {
+  <div class="backdrop" (click)="cancelDelete()" (keydown.escape)="cancelDelete()">
+    <div
+      class="dialog"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-title"
+      aria-describedby="delete-desc"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="delete-title">Delete sale #{{ sale.id }}?</h2>
+      <p id="delete-desc">
+        The sale to {{ sale.customer.name }} ({{ sale.totalAmount | currency: currency }}) and its products will be
+        permanently removed.
+      </p>
+      @if (deleteError(); as message) {
+        <div class="alert error" role="alert">{{ message }}</div>
+      }
+      <div class="dialog-actions">
+        <button #cancelButton type="button" class="btn btn-secondary" (click)="cancelDelete()" [disabled]="deleting()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="deleting()">
+          {{ deleting() ? 'Deleting…' : 'Delete sale' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

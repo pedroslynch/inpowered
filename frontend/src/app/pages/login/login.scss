@@ -1,0 +1,139 @@
+.login {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-12);
+  width: 47%;
+  max-width: 680px;
+  padding: var(--space-12) var(--space-16);
+  background:
+    radial-gradient(140% 110% at 0% 0%, #3d2fa6aa, #3d2fa600),
+    var(--bg-inverse);
+  color: var(--text-on-inverse);
+}
+
+.pitch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+
+  h1 {
+    color: var(--text-on-inverse);
+    font-size: var(--text-3xl);
+    line-height: 1.12;
+  }
+}
+
+.lead {
+  max-width: 480px;
+  color: var(--violet-200);
+  line-height: 1.6;
+}
+
+.outcomes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.outcome {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  min-height: 184px;
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(225deg, var(--cyan-100), var(--blue-100) 55%, var(--violet-200));
+  color: var(--indigo-700);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+
+  strong {
+    color: var(--indigo-800);
+    font-size: var(--text-xl);
+    font-weight: 500;
+  }
+
+  .partners {
+    margin-bottom: auto;
+    color: var(--indigo-900);
+    font-weight: 600;
+  }
+
+  &.dark {
+    background: linear-gradient(225deg, var(--indigo-900), var(--indigo-950) 55%, var(--indigo-800));
+    color: var(--violet-300);
+
+    strong {
+      color: var(--neutral-0);
+    }
+
+    .partners {
+      color: var(--violet-100);
+    }
+  }
+}
+
+.trust {
+  margin: 0;
+
+  blockquote {
+    margin: 0;
+    font-style: italic;
+  }
+
+  figcaption {
+    margin-top: var(--space-1);
+    color: var(--violet-300);
+    font-size: var(--text-xs);
+  }
+}
+
+.form-side {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) var(--space-6);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 420px;
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  h2 {
+    font-size: var(--text-2xl);
+  }
+
+  p {
+    color: var(--text-muted);
+  }
+}
+
+.reveal {
+  width: 32px;
+  height: 32px;
+  margin-right: -6px;
+}
+
+@media (max-width: 960px) {
+  .brand {
+    display: none;
+  }
+}

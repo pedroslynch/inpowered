@@ -1,0 +1,104 @@
+<main class="login">
+  <section class="brand" aria-label="inPowered AI">
+    <app-logo />
+
+    <div class="pitch">
+      <h1>Media decisions that deliver real outcomes.</h1>
+      <p class="lead">
+        Track every sale with the same impression-level clarity you expect from your campaigns.
+      </p>
+      <div class="outcomes">
+        <div class="outcome">
+          <span class="partners">KANTAR · Upwave · Cint</span>
+          <strong>Brand Lift</strong>
+          <span>Drive stronger brand recall and favorability.</span>
+        </div>
+        <div class="outcome dark">
+          <span class="partners">PlaceIQ · Foursquare · Cint</span>
+          <strong>Store Visits</strong>
+          <span>More store visits from every media dollar.</span>
+        </div>
+      </div>
+    </div>
+
+    <figure class="trust">
+      <blockquote>“+38% lift in favorability in the first quarter.”</blockquote>
+      <figcaption>Head of Media · OMD USA</figcaption>
+    </figure>
+  </section>
+
+  <section class="form-side">
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="heading">
+        <h2>Welcome back</h2>
+        <p>Sign in to access your sales and outcome reports.</p>
+      </div>
+
+      @if (error(); as message) {
+        <div class="alert error" role="alert">
+          <app-icon name="alert" />
+          <span>{{ message }}</span>
+        </div>
+      }
+
+      <div class="field">
+        <label class="field-label" for="email">Work email</label>
+        <div class="control" [class.invalid]="invalid('email')">
+          <app-icon name="mail" />
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="you@company.com"
+            autocomplete="username"
+            [attr.aria-invalid]="invalid('email')"
+            aria-describedby="email-error"
+          />
+        </div>
+        @if (invalid('email')) {
+          <span class="field-error" id="email-error">Enter a valid email address.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="password">Password</label>
+        <div class="control" [class.invalid]="invalid('password')">
+          <app-icon name="lock" />
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Your password"
+            autocomplete="current-password"
+            [attr.aria-invalid]="invalid('password')"
+            aria-describedby="password-error"
+          />
+          <button
+            type="button"
+            class="icon-btn reveal"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+          >
+            <app-icon [name]="showPassword() ? 'eye-off' : 'eye'" />
+          </button>
+        </div>
+        @if (invalid('password')) {
+          <span class="field-error" id="password-error">Enter your password.</span>
+        }
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" formControlName="remember" />
+        Keep me signed in
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block" [disabled]="submitting()">
+        @if (submitting()) {
+          <span class="spinner" aria-hidden="true"></span> Signing in…
+        } @else {
+          Sign In
+        }
+      </button>
+    </form>
+  </section>
+</main>

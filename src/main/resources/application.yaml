@@ -1,0 +1,24 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: inpowered
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/inpowered}
+    username: ${DB_USERNAME:inpowered}
+    password: ${DB_PASSWORD:inpowered}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    # db/seed holds sample data for development; drop it from the list in production.
+    locations: classpath:db/migration,classpath:db/seed
+
+security:
+  jwt:
+    # Development default only. Set JWT_SECRET (at least 32 characters) outside development.
+    secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789-abcdefghijklmnop}
+    expiration: ${JWT_EXPIRATION:8h}
+    issuer: inpowered
