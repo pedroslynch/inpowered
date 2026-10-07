@@ -19,7 +19,7 @@
   // Like the landing page menu: Solutions is a plain link (no dropdown) and there is no Press item.
   const style = document.createElement("style");
   style.textContent =
-    ".solutions-item > :not(a) { display: none !important; }" +
+    ".solutions-item > :not(a), .mobile-solutions-toggle svg, .mobile-solutions-submenu { display: none !important; }" +
     ".navbar .navbar-item:has(> a[href='/press']), .mobile-overlay-menu--nav a[href='/press'] { display: none !important; }";
   document.head.appendChild(style);
 
@@ -73,8 +73,9 @@
         if (item) item.after(account);
       }
       if (!mobileAccount.isConnected) {
-        const demo = document.querySelector(".mobile-overlay-menu--nav a[href='/#request-demo']");
-        if (demo) demo.after(mobileAccount);
+        // Request a Demo is the menu's button (its only `.button` link).
+        const demos = document.querySelectorAll(".mobile-overlay-menu--nav a.button");
+        if (demos.length) demos[demos.length - 1].after(mobileAccount);
       }
     };
     new MutationObserver(place).observe(document.documentElement, { childList: true, subtree: true });
@@ -98,6 +99,14 @@
   document.addEventListener(
     "click",
     (event) => {
+      // The phone menu's Solutions opens a submenu; like the landing page menu it opens the section instead.
+      if (event.target.closest && event.target.closest(".mobile-solutions-toggle")) {
+        event.preventDefault();
+        event.stopPropagation();
+        openAppPath("/#outcomes");
+        return;
+      }
+
       const link = event.target.closest && event.target.closest("a[href]");
       if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
 
@@ -116,14 +125,20 @@
       event.stopPropagation();
       if (!appPath) {
         window.open(url.href, "_blank", "noopener"); // other sites never open inside the frame
-      } else if (framed) {
-        window.parent.postMessage({ type: "navigate", url: appPath }, location.origin);
       } else {
-        location.assign(appPath);
+        openAppPath(appPath);
       }
     },
     true,
   );
+
+  function openAppPath(appPath) {
+    if (framed) {
+      window.parent.postMessage({ type: "navigate", url: appPath }, location.origin);
+    } else {
+      location.assign(appPath);
+    }
+  }
 
   function signedInUser() {
     for (const store of [localStorage, sessionStorage]) {
