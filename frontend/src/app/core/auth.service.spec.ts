@@ -61,7 +61,19 @@ describe('AuthService', () => {
     expect(localStorage.getItem('inpowered.session')).toBeNull();
   });
 
-  it('signs out and goes back to the login page', () => {
+  it('signs out and opens the landing page', () => {
+    localStorage.setItem('inpowered.session', JSON.stringify(loginResponse(ADMIN)));
+    const auth = setup();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    auth.logout();
+
+    expect(auth.user()).toBeNull();
+    expect(localStorage.getItem('inpowered.session')).toBeNull();
+    expect(navigate).toHaveBeenCalledWith(['/']);
+  });
+
+  it('sends an expired session to the login page', () => {
     localStorage.setItem('inpowered.session', JSON.stringify(loginResponse(ADMIN)));
     const auth = setup();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);

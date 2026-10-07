@@ -57,7 +57,7 @@
           window.parent.postMessage({ type: "signOut" }, location.origin);
         } else {
           clearSession();
-          location.assign("/login");
+          location.assign("/"); // like the app: signing out opens the landing page
         }
       });
       return account;

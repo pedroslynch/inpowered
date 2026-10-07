@@ -53,9 +53,17 @@ export class AuthService {
     return false;
   }
 
+  /**
+   * Ends the session. Signing out opens the landing page, where the user can sign in again when they
+   * want; an expired session goes to the login page with a notice.
+   */
   logout(reason?: 'expired'): void {
     this.clear();
-    this.router.navigate(['/login'], reason ? { queryParams: { reason } } : {});
+    if (reason) {
+      this.router.navigate(['/login'], { queryParams: { reason } });
+    } else {
+      this.router.navigate(['/']);
+    }
   }
 
   private clear(): void {
