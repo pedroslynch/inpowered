@@ -1,7 +1,9 @@
 .login {
   display: flex;
   min-height: 100vh;
-  background: var(--bg-page);
+  background:
+    radial-gradient(140% 110% at 0% 0%, #3d2fa6aa, #3d2fa600),
+    var(--bg-inverse);
 }
 
 .brand {
@@ -12,9 +14,6 @@
   width: 47%;
   max-width: 680px;
   padding: var(--space-12) var(--space-16);
-  background:
-    radial-gradient(140% 110% at 0% 0%, #3d2fa6aa, #3d2fa600),
-    var(--bg-inverse);
   color: var(--text-on-inverse);
 }
 
@@ -96,7 +95,23 @@
   }
 }
 
+/*
+ * The form sits on the inverse (dark) surface, so it takes the design system's dark-mode values.
+ * Controls use the darkest surface and the strong dark border to stand out from the gradient.
+ */
 .form-side {
+  --bg-page: var(--indigo-1000);
+  --bg-subtle: var(--indigo-1000);
+  --text-heading: var(--neutral-0);
+  --text-body: var(--violet-100);
+  --text-muted: var(--violet-300);
+  --text-placeholder: var(--violet-300);
+  --border-subtle: var(--indigo-800);
+  --border-strong: var(--indigo-800);
+  --action-primary-hover: var(--blue-400);
+  --action-secondary-border: var(--violet-300);
+
+  color-scheme: dark;
   display: flex;
   flex: 1;
   align-items: center;

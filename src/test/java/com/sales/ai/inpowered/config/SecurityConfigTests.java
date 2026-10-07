@@ -1,6 +1,7 @@
 package com.sales.ai.inpowered.config;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,12 @@ class SecurityConfigTests {
 		// No Angular build on the test classpath, so the page is not found, but it is not blocked either.
 		mockMvc.perform(get("/sales/12/edit"))
 			.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void pagesCanOnlyBeFramedByTheAppItself() throws Exception {
+		mockMvc.perform(get("/about"))
+			.andExpect(header().string("X-Frame-Options", "SAMEORIGIN"));
 	}
 
 	@Test

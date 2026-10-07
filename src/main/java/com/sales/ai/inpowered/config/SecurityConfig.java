@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,7 +40,7 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
+		http.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.GET, "/api/hello").permitAll()
@@ -53,6 +54,8 @@ public class SecurityConfig {
 				.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
 			.httpBasic(basic -> basic.disable())
 			.formLogin(form -> form.disable())
+			// The Angular /about and /careers routes frame copies of inpowered.ai pages from this same origin.
+			.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
 			.cors(Customizer.withDefaults());
 		return http.build();
 	}

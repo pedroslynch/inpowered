@@ -4,6 +4,24 @@ import { Shell } from './pages/shell/shell';
 
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    title: 'inPowered AI · AI Decisioning for Outcomes',
+    loadComponent: () => import('./pages/landing/landing').then((m) => m.Landing),
+  },
+  {
+    path: 'about',
+    title: 'About inPowered · inPowered AI',
+    loadComponent: () => import('./pages/inpowered-page/inpowered-page').then((m) => m.InpoweredPage),
+    data: { page: '/inpowered-about.html', frameTitle: 'About inPowered AI' },
+  },
+  {
+    path: 'careers',
+    title: 'Careers · inPowered AI',
+    loadComponent: () => import('./pages/inpowered-page/inpowered-page').then((m) => m.InpoweredPage),
+    data: { page: '/inpowered-careers.html', frameTitle: 'Careers at inPowered AI' },
+  },
+  {
     path: 'login',
     title: 'Sign in · inPowered AI',
     canActivate: [guestGuard],
@@ -14,7 +32,6 @@ export const routes: Routes = [
     component: Shell,
     canActivate: [authGuard],
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'home' },
       {
         path: 'home',
         title: 'Home · inPowered AI',

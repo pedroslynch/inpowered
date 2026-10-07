@@ -45,8 +45,13 @@ Layered backend: **controller → model → data**.
 - `open-in-view` is disabled: load lazy associations in the service layer (`SaleRepository` uses fetch joins).
 - **Tests**: Spring Boot 4 test slices live in separate modules (`org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest`, etc.); don't use Boot 3 package names. Integration tests import `TestcontainersConfiguration`.
 - **Docker** (`Dockerfile`, `docker/entrypoint.sh`): builds the frontend, copies it into `static/`, builds the jar, and runs it on top of the `postgres:17` image. The entrypoint starts Postgres on localhost, waits for it, then starts the API; the server port comes from `PORT` (default 8080).
-- **Frontend**: standalone components with signals, functional guards/interceptor in `frontend/src/app/core`, pages in `pages/`. Design tokens are CSS custom properties in `frontend/src/styles.scss` (same names as the `.pen` variables), shared component classes (`.btn`, `.control`, `.card`, `.table`) live there too. After sign-in the `Shell` (navbar + menu) wraps every page; menu items are defined in `pages/shell/shell.ts`.
+- **Frontend**: standalone components with signals, functional guards/interceptor in `frontend/src/app/core`, pages in `pages/`. Design tokens are CSS custom properties in `frontend/src/styles.scss` (same names as the `.pen` variables), shared component classes (`.btn`, `.control`, `.card`, `.table`) live there too. The public landing page (`pages/landing`, route `/`) implements `src/main/design/paginainicial.pen`; its logos and hero diagram are SVGs exported from that file into `frontend/public/landing`. Its "About Us" and "Careers" links open `/about` and `/careers` (`pages/inpowered-page`, the copy to show comes from the route data), which frame copies of inpowered.ai/about and /careers bundled from `frontend/inpowered-pages` (see its README; `angular.json` copies it to the build root, and `SecurityConfig` allows same-origin frames). The login page sits entirely on the inverse (dark) surface and overrides the semantic tokens with their dark-mode values. After sign-in (`/home`) the `Shell` (navbar + menu) wraps every page; menu items are defined in `pages/shell/shell.ts`.
 - **Code style**: tab indentation in Java sources and `pom.xml`; 2 spaces in the frontend.
+
+## Design files
+
+- `src/main/design/inpowered.pen`: the design system (below).
+- `src/main/design/paginainicial.pen` (~500 KB): a capture of the inpowered.ai home page, used for the landing page. Single frame "inpowered.ai", no variables; its text uses the Outfit font, and so does the landing page (it overrides `--font`); the rest of the app keeps Lexend. Logos are vector paths whose `geometry` is scaled into each node's `width`/`height`.
 
 ## Design system (`src/main/design/inpowered.pen`)
 
