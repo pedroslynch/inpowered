@@ -39,8 +39,10 @@ describe('SalesList', () => {
     expect(rows[0].textContent).toContain('Northwind Traders');
     expect(rows[0].textContent).toContain('Laptop Pro 14 × 1');
     expect(rows[0].textContent).toContain('$7,899.90');
-    expect(element.querySelector('.summary')?.textContent).toContain('2 sales');
-    expect(element.querySelector('.summary')?.textContent).toContain('$8,399.70');
+    const figures = [...element.querySelectorAll('.summary .kpi')].map(
+      (kpi) => `${kpi.querySelector('dt')?.textContent?.trim()} ${kpi.querySelector('dd')?.textContent?.trim()}`,
+    );
+    expect(figures).toEqual(['Revenue $8,400', 'Sales 2', 'Average sale $4,200']);
   });
 
   it('shows the seller column to administrators only', async () => {

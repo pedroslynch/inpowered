@@ -19,7 +19,7 @@ describe('Shell', () => {
     const first = element.querySelector<HTMLAnchorElement>('nav.menu a');
     expect(first?.textContent?.trim()).toBe('Sales');
     expect(first?.getAttribute('href')).toBe('/sales');
-    expect(element.textContent).toContain('System Administrator');
+    expect(element.textContent).toContain('Fernando Sonegheti');
     expect(element.textContent).toContain('Administrator');
 
     element.querySelector<HTMLButtonElement>('.sign-out')!.click();

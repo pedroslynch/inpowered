@@ -1,24 +1,24 @@
 <header class="navbar">
-  <a routerLink="/home" class="home-link" aria-label="inPowered AI home"><app-logo /></a>
+  <div class="navbar-inner">
+    <a routerLink="/" class="home-link" aria-label="inPowered AI website"><app-logo /></a>
 
-  <nav class="menu" aria-label="Main menu">
-    @for (item of menu; track item.path) {
-      <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">
-        <app-icon [name]="item.icon" [size]="16" />
-        {{ item.label }}
-      </a>
-    }
-  </nav>
+    <nav class="menu" aria-label="Main menu">
+      @for (item of menu; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-link">{{ item.label }}</a>
+      }
+    </nav>
 
-  <div class="account">
-    <div class="who">
-      <span class="name">{{ user()?.fullName }}</span>
-      <span class="role">{{ roleLabel() }}</span>
+    <div class="account">
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <div class="who">
+        <span class="name">{{ user()?.fullName }}</span>
+        <span class="role">{{ roleLabel() }}</span>
+      </div>
+      <button type="button" class="btn sign-out" (click)="signOut()" aria-label="Sign out">
+        <app-icon name="log-out" [size]="16" />
+        <span class="sign-out-label">Sign out</span>
+      </button>
     </div>
-    <button type="button" class="btn sign-out" (click)="signOut()">
-      <app-icon name="log-out" [size]="16" />
-      Sign out
-    </button>
   </div>
 </header>
 

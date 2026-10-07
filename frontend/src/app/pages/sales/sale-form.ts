@@ -31,9 +31,13 @@ export class SaleForm implements OnInit {
 
   /** Route parameter; absent when creating. */
   readonly id = input<string>();
+  /** Query parameter: `home` when the form was opened from the home page. */
+  readonly from = input<string>();
 
   protected readonly currency = APP_CURRENCY;
   protected readonly isAdmin = inject(AuthService).isAdmin;
+  /** Where Cancel goes: back to the page that opened the form. */
+  protected readonly cancelLink = computed(() => (this.from() === 'home' ? '/home' : '/sales'));
   protected readonly saleId = computed(() => (this.id() ? Number(this.id()) : null));
 
   protected readonly customers = signal<Customer[]>([]);
@@ -73,6 +77,20 @@ export class SaleForm implements OnInit {
   });
 
   protected readonly total = computed(() => this.lines().reduce((sum, line) => sum + line.subtotal, 0));
+
+  private readonly customerId = toSignal(this.form.controls.customerId.valueChanges, {
+    initialValue: this.form.controls.customerId.value,
+  });
+
+  protected readonly customerName = computed(
+    () => this.customers().find((customer) => customer.id === this.customerId())?.name ?? null,
+  );
+
+  protected readonly productCount = computed(() => this.lines().filter((line) => line.product).length);
+
+  protected readonly unitCount = computed(() =>
+    this.itemValues().reduce((sum, item) => sum + (item.productId != null && Number(item.quantity) > 0 ? Number(item.quantity) : 0), 0),
+  );
 
   get itemForms(): ItemForm[] {
     return this.form.controls.items.controls;
@@ -114,6 +132,13 @@ export class SaleForm implements OnInit {
         quantity: this.fb.control(1, [Validators.required, Validators.min(1), Validators.max(100000)]),
       }),
     );
+  }
+
+  /** Quantity buttons: add or remove one unit, never below 1. */
+  protected changeQuantity(index: number, delta: number): void {
+    const control = this.itemForms[index].controls.quantity;
+    control.setValue(Math.max(1, (Number(control.value) || 0) + delta));
+    control.markAsTouched();
   }
 
   protected removeItem(index: number): void {

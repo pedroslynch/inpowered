@@ -13,12 +13,67 @@
       </li>
       <li class="optional"><a routerLink="/about">About Us</a></li>
       <li class="optional"><a href="#case-studies">Case Studies</a></li>
-      <li class="optional"><a href="#results">Press</a></li>
       <li class="optional"><a routerLink="/careers">Careers</a></li>
-      <li><a routerLink="/login">Log In</a></li>
+      @if (!user()) {
+        <li><a routerLink="/login">Log In</a></li>
+      }
       <li><a href="#demo" class="btn btn-primary demo-btn">Request a Demo</a></li>
+      @if (user(); as user) {
+        <li class="account">
+          <a routerLink="/home" class="who" aria-label="Open the sales platform">
+            <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+            <span class="who-text">
+              <span class="name">{{ user.fullName }}</span>
+              <span class="role">{{ roleLabel() }}</span>
+            </span>
+          </a>
+          <button type="button" class="sign-out" (click)="signOut()">Sign out</button>
+        </li>
+      }
     </ul>
+
+    <button
+      type="button"
+      class="burger"
+      [class.is-active]="menuOpen()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="mobile-menu"
+      aria-label="Menu"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      <span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>
+    </button>
   </nav>
+
+  <!-- Phone menu, as on the inpowered.ai pages (/about): the whole menu over the page. -->
+  @if (menuOpen()) {
+    <div id="mobile-menu" class="mobile-menu" (click)="closeMenuOnLink($event)">
+      <nav class="mobile-menu-nav" aria-label="Main">
+        <a href="#top">DecisioningOS</a>
+        <a href="#outcomes">Solutions</a>
+        <a routerLink="/about">About Us</a>
+        <a href="#case-studies">Case Studies</a>
+        <a routerLink="/careers">Careers</a>
+        @if (!user()) {
+          <a routerLink="/login">Log In</a>
+        }
+        <a href="#demo" class="btn btn-primary mobile-demo">Request a Demo</a>
+        @if (user(); as user) {
+          <div class="mobile-account">
+            <a routerLink="/home" class="who" aria-label="Open the sales platform">
+              <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+              <span class="who-text">
+                <span class="name">{{ user.fullName }}</span>
+                <span class="role">{{ roleLabel() }}</span>
+              </span>
+            </a>
+            <button type="button" class="sign-out" (click)="signOut()">Sign out</button>
+          </div>
+        }
+      </nav>
+      <p class="mobile-menu-footer">© Copyright {{ year }} inPowered</p>
+    </div>
+  }
 </header>
 
 <main>
@@ -192,16 +247,12 @@
             </select>
           </div>
           <div class="line-field">
-            <label for="demo-state">State</label>
-            @if (isUnitedStates()) {
-              <select id="demo-state" formControlName="state" autocomplete="address-level1">
-                @for (state of usStates; track state) {
-                  <option [value]="state">{{ state }}</option>
-                }
-              </select>
-            } @else {
-              <input id="demo-state" formControlName="state" autocomplete="address-level1" />
-            }
+            <label for="demo-state">State / Region</label>
+            <select id="demo-state" formControlName="state" autocomplete="address-level1">
+              @for (region of regions(); track region) {
+                <option [value]="region">{{ region }}</option>
+              }
+            </select>
           </div>
           <div class="line-field">
             <label for="demo-message">Message (optional)</label>

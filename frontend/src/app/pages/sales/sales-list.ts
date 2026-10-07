@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,14 +12,14 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { errorMessage } from '../../core/api-error';
-import { APP_CURRENCY } from '../../core/format';
+import { APP_CURRENCY, initials } from '../../core/format';
 import { Sale } from '../../core/models';
 import { SalesService } from '../../core/sales.service';
 import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-sales-list',
-  imports: [RouterLink, CurrencyPipe, DatePipe, Icon],
+  imports: [RouterLink, CurrencyPipe, DatePipe, DecimalPipe, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sales-list.html',
   styleUrl: './sales-list.scss',
@@ -28,6 +28,7 @@ export class SalesList {
   private readonly salesService = inject(SalesService);
 
   protected readonly currency = APP_CURRENCY;
+  protected readonly initials = initials;
   protected readonly isAdmin = inject(AuthService).isAdmin;
 
   protected readonly sales = signal<Sale[]>([]);
@@ -59,6 +60,7 @@ export class SalesList {
   });
 
   protected readonly total = computed(() => this.filtered().reduce((sum, sale) => sum + sale.totalAmount, 0));
+  protected readonly average = computed(() => (this.filtered().length ? this.total() / this.filtered().length : 0));
 
   private readonly cancelButton = viewChild<ElementRef<HTMLButtonElement>>('cancelButton');
 
@@ -81,6 +83,10 @@ export class SalesList {
         this.loading.set(false);
       },
     });
+  }
+
+  protected unitCount(sale: Sale): number {
+    return sale.items.reduce((sum, item) => sum + item.quantity, 0);
   }
 
   protected productSummary(sale: Sale): string {

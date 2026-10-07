@@ -1,6 +1,6 @@
 import { LoginResponse, Product, Sale, User } from '../core/models';
 
-export const ADMIN: User = { id: 1, email: 'admin@inpowered.ai', fullName: 'System Administrator', role: 'ADMIN' };
+export const ADMIN: User = { id: 1, email: 'fernando.sonegheti@inpowered.ai', fullName: 'Fernando Sonegheti', role: 'ADMIN' };
 export const SELLER: User = { id: 2, email: 'maria.silva@inpowered.ai', fullName: 'Maria Silva', role: 'SELLER' };
 
 export function loginResponse(user: User, expiresInMs = 3_600_000): LoginResponse {

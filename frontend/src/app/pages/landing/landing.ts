@@ -13,20 +13,56 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { map } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
+import { initials } from '../../core/format';
 
 const STATS_COUNT_MS = 1000;
 
-const UNITED_STATES = 'United States';
+/** Countries of the demo form and their states / regions, in display order. */
+const REGIONS: Record<string, string[]> = {
+  'United States': [
+    'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
+    'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas',
+    'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+    'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
+    'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island',
+    'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
+    'West Virginia', 'Wisconsin', 'Wyoming',
+  ],
+  Brazil: [
+    'Acre', 'Alagoas', 'Amapá', 'Amazonas', 'Bahia', 'Ceará', 'Distrito Federal', 'Espírito Santo', 'Goiás',
+    'Maranhão', 'Mato Grosso', 'Mato Grosso do Sul', 'Minas Gerais', 'Pará', 'Paraíba', 'Paraná', 'Pernambuco',
+    'Piauí', 'Rio de Janeiro', 'Rio Grande do Norte', 'Rio Grande do Sul', 'Rondônia', 'Roraima',
+    'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins',
+  ],
+  Canada: [
+    'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador', 'Northwest Territories',
+    'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island', 'Quebec', 'Saskatchewan', 'Yukon',
+  ],
+  Mexico: [
+    'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua', 'Coahuila',
+    'Colima', 'Durango', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco', 'Mexico City', 'México', 'Michoacán',
+    'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí',
+    'Sinaloa', 'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas',
+  ],
+  'United Kingdom': ['England', 'Northern Ireland', 'Scotland', 'Wales'],
+  Germany: [
+    'Baden-Württemberg', 'Bavaria', 'Berlin', 'Brandenburg', 'Bremen', 'Hamburg', 'Hesse', 'Lower Saxony',
+    'Mecklenburg-Vorpommern', 'North Rhine-Westphalia', 'Rhineland-Palatinate', 'Saarland', 'Saxony',
+    'Saxony-Anhalt', 'Schleswig-Holstein', 'Thuringia',
+  ],
+  France: [
+    'Auvergne-Rhône-Alpes', 'Bourgogne-Franche-Comté', 'Brittany', 'Centre-Val de Loire', 'Corsica', 'Grand Est',
+    'Hauts-de-France', 'Île-de-France', 'Normandy', 'Nouvelle-Aquitaine', 'Occitanie', 'Pays de la Loire',
+    "Provence-Alpes-Côte d'Azur",
+  ],
+  Australia: [
+    'Australian Capital Territory', 'New South Wales', 'Northern Territory', 'Queensland', 'South Australia',
+    'Tasmania', 'Victoria', 'Western Australia',
+  ],
+};
 
-const US_STATES = [
-  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware',
-  'District of Columbia', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas',
-  'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
-  'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York',
-  'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island',
-  'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington',
-  'West Virginia', 'Wisconsin', 'Wyoming',
-];
+const DEFAULT_COUNTRY = 'United States';
 
 interface Outcome {
   title: string;
@@ -49,6 +85,13 @@ interface Outcome {
   styleUrl: './landing.scss',
 })
 export class Landing {
+  private readonly auth = inject(AuthService);
+
+  /** Signed-in user, shown in the menu (with Sign out) instead of the Log In link. */
+  protected readonly user = this.auth.user;
+  protected readonly roleLabel = computed(() => (this.auth.isAdmin() ? 'Administrator' : 'Seller'));
+  protected readonly initials = computed(() => initials(this.user()?.fullName ?? ''));
+
   protected readonly year = new Date().getFullYear();
 
   protected readonly agencies = [
@@ -151,9 +194,7 @@ export class Landing {
     const destroyRef = inject(DestroyRef);
     this.demoForm.controls.country.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe((country) =>
-        this.demoForm.controls.state.setValue(country === UNITED_STATES ? US_STATES[0] : ''),
-      );
+      .subscribe((country) => this.demoForm.controls.state.setValue(REGIONS[country][0]));
     afterNextRender(() => {
       const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       if (typeof IntersectionObserver === 'undefined' || reduceMotion) {
@@ -185,34 +226,36 @@ export class Landing {
     });
   }
 
-  protected readonly countries = [
-    UNITED_STATES,
-    'Brazil',
-    'Canada',
-    'Mexico',
-    'United Kingdom',
-    'Germany',
-    'France',
-    'Australia',
-    'Other',
-  ];
+  protected readonly countries = Object.keys(REGIONS);
 
   protected readonly demoForm = inject(NonNullableFormBuilder).group({
     name: ['', Validators.required],
     company: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    country: [UNITED_STATES],
-    state: [US_STATES[0]],
+    country: [DEFAULT_COUNTRY],
+    state: [REGIONS[DEFAULT_COUNTRY][0]],
     message: [''],
   });
 
-  protected readonly usStates = US_STATES;
-
-  /** States are picked from a list for the United States and typed for other countries. */
-  protected readonly isUnitedStates = toSignal(
-    this.demoForm.controls.country.valueChanges.pipe(map((country) => country === UNITED_STATES)),
-    { initialValue: true },
+  /** States / regions of the selected country. */
+  protected readonly regions = toSignal(
+    this.demoForm.controls.country.valueChanges.pipe(map((country) => REGIONS[country])),
+    { initialValue: REGIONS[DEFAULT_COUNTRY] },
   );
+
+  /** Phone menu (below 769px wide), opened by the burger button. */
+  protected readonly menuOpen = signal(false);
+
+  /** Any link in the phone menu closes it. */
+  protected closeMenuOnLink(event: Event): void {
+    if ((event.target as Element).closest('a')) {
+      this.menuOpen.set(false);
+    }
+  }
+
+  protected signOut(): void {
+    this.auth.logout();
+  }
 
   /** There is no backend for demo requests yet: a valid form only shows a confirmation. */
   protected readonly demoSent = signal(false);

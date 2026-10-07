@@ -49,12 +49,12 @@ describe('Login', () => {
     const { fixture, element } = await render();
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
-    type(element, '#email', ' admin@inpowered.ai ');
+    type(element, '#email', ' fernando.sonegheti@inpowered.ai ');
     type(element, '#password', 'Admin@123');
     element.querySelector<HTMLButtonElement>('button[type=submit]')!.click();
     await fixture.whenStable();
 
-    expect(auth.login).toHaveBeenCalledWith('admin@inpowered.ai', 'Admin@123', false);
+    expect(auth.login).toHaveBeenCalledWith('fernando.sonegheti@inpowered.ai', 'Admin@123', false);
     expect(navigate).toHaveBeenCalledWith(['/home']);
   });
 
@@ -64,7 +64,7 @@ describe('Login', () => {
     );
     const { fixture, element } = await render();
 
-    type(element, '#email', 'admin@inpowered.ai');
+    type(element, '#email', 'fernando.sonegheti@inpowered.ai');
     type(element, '#password', 'wrong');
     element.querySelector<HTMLButtonElement>('button[type=submit]')!.click();
     await fixture.whenStable();

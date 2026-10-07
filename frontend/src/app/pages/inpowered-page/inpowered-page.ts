@@ -9,11 +9,12 @@ import {
 } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 
 /**
  * Shows a copy of an inpowered.ai page full screen (bundled from frontend/inpowered-pages, see its README).
  * The copy's menu links post `{ type: 'navigate', url }` messages, which open the matching page or landing
- * section of this app.
+ * section of this app; its Sign out button (shown to signed-in users) posts `{ type: 'signOut' }`.
  */
 @Component({
   selector: 'app-inpowered-page',
@@ -51,12 +52,17 @@ export class InpoweredPage implements OnInit {
   protected readonly framed = window.self !== window.top;
 
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   constructor() {
     if (this.framed) {
       return;
     }
     const onMessage = (event: MessageEvent) => {
+      if (event.origin === window.location.origin && event.data?.type === 'signOut') {
+        this.auth.logout();
+        return;
+      }
       const url = event.data?.url;
       if (event.origin !== window.location.origin || event.data?.type !== 'navigate' || !isAppPath(url)) {
         return;

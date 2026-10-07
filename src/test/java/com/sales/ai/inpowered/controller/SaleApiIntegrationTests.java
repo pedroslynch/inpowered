@@ -34,7 +34,7 @@ import com.sales.ai.inpowered.TestcontainersConfiguration;
 @Transactional
 class SaleApiIntegrationTests {
 
-	private static final String ADMIN = "admin@inpowered.ai";
+	private static final String ADMIN = "fernando.sonegheti@inpowered.ai";
 
 	private static final String MARIA = "maria.silva@inpowered.ai";
 

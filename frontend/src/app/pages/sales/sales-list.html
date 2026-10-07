@@ -1,19 +1,39 @@
-<div class="page">
-  <header class="page-header">
+<section class="hero-band">
+  <div class="hero-inner">
     <div>
-      <span class="eyebrow">Sales</span>
       <h1>Sales</h1>
-      <p>{{ isAdmin() ? 'All sales across your sellers.' : 'Your sales.' }}</p>
+      <p>
+        {{ isAdmin() ? 'Every sale across your sellers' : 'Your sales' }}, with their customers, products and totals.
+      </p>
     </div>
-    <a routerLink="/sales/new" class="btn btn-primary">
-      <app-icon name="plus" [size]="16" />
+    <a routerLink="/sales/new" class="btn btn-primary btn-lg new-sale">
+      <app-icon name="plus" [size]="18" />
       New sale
     </a>
-  </header>
+  </div>
 
+  @if (!loading() && !error()) {
+    <dl class="hero-inner kpis summary" aria-live="polite">
+      <div class="kpi">
+        <dt>Revenue</dt>
+        <dd>{{ total() | currency: currency : 'symbol' : '1.0-0' }}</dd>
+      </div>
+      <div class="kpi">
+        <dt>{{ filtered().length === 1 ? 'Sale' : 'Sales' }}</dt>
+        <dd>{{ filtered().length | number }}</dd>
+      </div>
+      <div class="kpi">
+        <dt>Average sale</dt>
+        <dd>{{ average() | currency: currency : 'symbol' : '1.0-0' }}</dd>
+      </div>
+    </dl>
+  }
+</section>
+
+<div class="page-body">
   @if (notice(); as message) {
-    <div class="alert success notice" role="status">
-      <app-icon name="check" />
+    <div class="toast" role="status">
+      <app-icon name="check" [size]="18" />
       <span>{{ message }}</span>
       <button type="button" class="icon-btn dismiss" (click)="notice.set(null)" aria-label="Dismiss">
         <app-icon name="x" [size]="16" />
@@ -21,23 +41,25 @@
     </div>
   }
 
-  <section class="card">
+  <section class="surface sales" aria-labelledby="sales-heading">
+    <h2 id="sales-heading" class="sr-only">Sales list</h2>
     <div class="toolbar">
-      <div class="control compact search">
-        <app-icon name="search" />
-        <label for="sales-search" class="sr-only">Search sales</label>
-        <input
-          id="sales-search"
-          type="search"
-          placeholder="Search by sale, customer, seller or product"
-          [value]="query()"
-          (input)="query.set($any($event.target).value)"
-        />
+      <div class="line-field search">
+        <label for="sales-search">Search</label>
+        <div class="search-input">
+          <app-icon name="search" [size]="18" />
+          <input
+            id="sales-search"
+            type="search"
+            placeholder="Customer, seller, product or #"
+            [value]="query()"
+            (input)="query.set($any($event.target).value)"
+          />
+        </div>
       </div>
-      @if (!loading() && !error()) {
-        <p class="summary">
-          {{ filtered().length }} {{ filtered().length === 1 ? 'sale' : 'sales' }} ·
-          <strong>{{ total() | currency: currency }}</strong>
+      @if (!loading() && !error() && query()) {
+        <p class="match-count">
+          {{ filtered().length }} of {{ sales().length }} {{ sales().length === 1 ? 'sale' : 'sales' }}
         </p>
       }
     </div>
@@ -52,10 +74,13 @@
     } @else if (filtered().length === 0) {
       <div class="state">
         @if (query()) {
-          <p class="muted">No sales match “{{ query() }}”.</p>
+          <p class="state-title">No sales match “{{ query() }}”.</p>
+          <p class="muted">Try a customer name, a product or a sale number such as #3.</p>
+          <button type="button" class="btn btn-secondary" (click)="query.set('')">Clear search</button>
         } @else {
-          <p class="muted">No sales yet.</p>
-          <a routerLink="/sales/new" class="btn btn-primary">Create the first sale</a>
+          <p class="state-title">No sales yet.</p>
+          <p class="muted">Register the first one to see revenue and products here.</p>
+          <a routerLink="/sales/new" class="btn btn-primary">New sale</a>
         }
       </div>
     } @else {
@@ -64,7 +89,6 @@
           <thead>
             <tr>
               <th scope="col">Sale</th>
-              <th scope="col">Date</th>
               <th scope="col">Customer</th>
               @if (isAdmin()) {
                 <th scope="col">Seller</th>
@@ -77,16 +101,39 @@
           <tbody>
             @for (sale of filtered(); track sale.id) {
               <tr>
-                <td class="id">#{{ sale.id }}</td>
-                <td class="nowrap">{{ sale.saleDate | date: 'MMM d, y' }}</td>
-                <td>{{ sale.customer.name }}</td>
+                <td class="sale-cell">
+                  <a [routerLink]="['/sales', sale.id, 'edit']" class="sale-id">#{{ sale.id }}</a>
+                  <span class="sub">{{ sale.saleDate | date: 'MMM d, y' }}</span>
+                </td>
+                <td>
+                  <span class="strong">{{ sale.customer.name }}</span>
+                  @if (sale.notes) {
+                    <span class="sub notes" [title]="sale.notes">{{ sale.notes }}</span>
+                  }
+                </td>
                 @if (isAdmin()) {
-                  <td>{{ sale.seller.name }}</td>
+                  <td>
+                    <span class="person">
+                      <span class="avatar" aria-hidden="true">{{ initials(sale.seller.name) }}</span>
+                      {{ sale.seller.name }}
+                    </span>
+                  </td>
                 }
-                <td class="products" [title]="productSummary(sale)">{{ productSummary(sale) }}</td>
+                <td class="products" [title]="productSummary(sale)">
+                  <span class="product">{{ sale.items[0].productName }} × {{ sale.items[0].quantity }}</span>
+                  @if (sale.items.length > 1) {
+                    <span class="more">+{{ sale.items.length - 1 }} more</span>
+                  }
+                  <span class="sub">{{ unitCount(sale) }} {{ unitCount(sale) === 1 ? 'unit' : 'units' }}</span>
+                </td>
                 <td class="num total">{{ sale.totalAmount | currency: currency }}</td>
                 <td class="actions">
-                  <a [routerLink]="['/sales', sale.id, 'edit']" class="icon-btn" [attr.aria-label]="'Edit sale #' + sale.id">
+                  <a
+                    [routerLink]="['/sales', sale.id, 'edit']"
+                    class="icon-btn"
+                    [attr.aria-label]="'Edit sale #' + sale.id"
+                    title="Edit"
+                  >
                     <app-icon name="pencil" [size]="16" />
                   </a>
                   <button
@@ -94,6 +141,7 @@
                     class="icon-btn danger"
                     (click)="askDelete(sale)"
                     [attr.aria-label]="'Delete sale #' + sale.id"
+                    title="Delete"
                   >
                     <app-icon name="trash" [size]="16" />
                   </button>
@@ -117,6 +165,7 @@
       aria-describedby="delete-desc"
       (click)="$event.stopPropagation()"
     >
+      <span class="dialog-icon" aria-hidden="true"><app-icon name="trash" [size]="20" /></span>
       <h2 id="delete-title">Delete sale #{{ sale.id }}?</h2>
       <p id="delete-desc">
         The sale to {{ sale.customer.name }} ({{ sale.totalAmount | currency: currency }}) and its products will be

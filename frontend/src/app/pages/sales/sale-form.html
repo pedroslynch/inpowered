@@ -1,157 +1,216 @@
-<div class="page">
-  <a routerLink="/sales" class="back"><app-icon name="arrow-left" [size]="16" /> Back to sales</a>
-
-  <header class="page-header">
+<section class="hero-band">
+  <div class="hero-inner">
     <div>
-      <span class="eyebrow">Sales</span>
+      <a routerLink="/sales" class="back-link"><app-icon name="arrow-left" [size]="16" /> All sales</a>
       <h1>{{ saleId() ? 'Edit sale #' + saleId() : 'New sale' }}</h1>
-      <p>{{ saleId() ? 'Update the customer, date or products of this sale.' : 'Register a sale and the products sold.' }}</p>
+      <p>
+        {{
+          saleId()
+            ? 'Change the customer, date or products. Prices stay as they were when the sale was made.'
+            : 'Choose the customer and the products sold; the total updates as you go.'
+        }}
+      </p>
     </div>
-  </header>
+  </div>
+</section>
 
+<div class="page-body">
   @if (loading()) {
-    <div class="card state" role="status"><span class="spinner"></span> Loading…</div>
+    <div class="surface state" role="status"><span class="spinner"></span> Loading…</div>
   } @else if (loadError()) {
-    <div class="card state">
+    <div class="surface state">
       <div class="alert error" role="alert"><app-icon name="alert" /> {{ loadError() }}</div>
       <a routerLink="/sales" class="btn btn-secondary">Back to sales</a>
     </div>
   } @else {
-    <form class="card sale-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      @if (saveError(); as message) {
-        <div class="alert error" role="alert">
-          <app-icon name="alert" />
-          <div>
-            {{ message }}
-            @for (detail of saveFieldErrors(); track detail) {
-              <div class="detail">{{ detail }}</div>
-            }
+    <form class="layout" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="surface main">
+        @if (saveError(); as message) {
+          <div class="alert error" role="alert">
+            <app-icon name="alert" />
+            <div>
+              {{ message }}
+              @for (detail of saveFieldErrors(); track detail) {
+                <div class="detail">{{ detail }}</div>
+              }
+            </div>
           </div>
-        </div>
-      }
+        }
 
-      <section>
-        <h2>Details</h2>
-        <div class="grid">
-          @if (isAdmin()) {
-            <div class="field">
-              <label class="field-label" for="seller">Seller</label>
-              <div class="control" [class.invalid]="invalid(form.controls.sellerId)">
-                <select id="seller" formControlName="sellerId">
+        <section class="block" aria-labelledby="details-title">
+          <h2 id="details-title">Details</h2>
+          <div class="grid" [class.three]="isAdmin()">
+            @if (isAdmin()) {
+              <div class="line-field">
+                <label for="seller">Seller</label>
+                <select
+                  id="seller"
+                  formControlName="sellerId"
+                  [class.empty]="form.controls.sellerId.value === null"
+                  [attr.aria-invalid]="invalid(form.controls.sellerId)"
+                >
                   <option [ngValue]="null" disabled>Select a seller</option>
                   @for (seller of sellers(); track seller.id) {
                     <option [ngValue]="seller.id">{{ seller.name }}</option>
                   }
                 </select>
+                @if (invalid(form.controls.sellerId)) {
+                  <span class="field-error">Select a seller.</span>
+                }
               </div>
-              @if (invalid(form.controls.sellerId)) {
-                <span class="field-error">Select a seller.</span>
-              }
-            </div>
-          }
+            }
 
-          <div class="field">
-            <label class="field-label" for="customer">Customer</label>
-            <div class="control" [class.invalid]="invalid(form.controls.customerId)">
-              <select id="customer" formControlName="customerId">
+            <div class="line-field">
+              <label for="customer">Customer</label>
+              <select
+                id="customer"
+                formControlName="customerId"
+                [class.empty]="form.controls.customerId.value === null"
+                [attr.aria-invalid]="invalid(form.controls.customerId)"
+              >
                 <option [ngValue]="null" disabled>Select a customer</option>
                 @for (customer of customers(); track customer.id) {
                   <option [ngValue]="customer.id">{{ customer.name }}</option>
                 }
               </select>
+              @if (invalid(form.controls.customerId)) {
+                <span class="field-error">Select a customer.</span>
+              }
             </div>
-            @if (invalid(form.controls.customerId)) {
-              <span class="field-error">Select a customer.</span>
-            }
-          </div>
 
-          <div class="field">
-            <label class="field-label" for="sale-date">Sale date</label>
-            <div class="control" [class.invalid]="invalid(form.controls.saleDate)">
-              <input id="sale-date" type="date" formControlName="saleDate" />
+            <div class="line-field">
+              <label for="sale-date">Sale date</label>
+              <input
+                id="sale-date"
+                type="date"
+                formControlName="saleDate"
+                [attr.aria-invalid]="invalid(form.controls.saleDate)"
+              />
+              @if (invalid(form.controls.saleDate)) {
+                <span class="field-error">Enter the sale date.</span>
+              }
             </div>
-            @if (invalid(form.controls.saleDate)) {
-              <span class="field-error">Enter the sale date.</span>
-            }
           </div>
-        </div>
 
-        <div class="field">
-          <label class="field-label" for="notes">Notes <span class="muted">(optional)</span></label>
-          <div class="control textarea" [class.invalid]="invalid(form.controls.notes)">
-            <textarea id="notes" formControlName="notes" rows="2" maxlength="500" placeholder="Delivery details, agreements…"></textarea>
+          <div class="line-field">
+            <label for="notes">Notes (optional)</label>
+            <textarea
+              id="notes"
+              formControlName="notes"
+              rows="2"
+              maxlength="500"
+              placeholder="Delivery details, agreements…"
+            ></textarea>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section>
-        <div class="section-head">
-          <h2>Products</h2>
-          <button type="button" class="btn btn-secondary" (click)="addItem()">
-            <app-icon name="plus" [size]="16" /> Add product
-          </button>
-        </div>
-
-        <div class="lines" formArrayName="items">
-          <div class="line head" aria-hidden="true">
-            <span>Product</span><span>Quantity</span><span class="num">Unit price</span><span class="num">Subtotal</span><span></span>
+        <section class="block" aria-labelledby="products-title">
+          <div class="section-head">
+            <h2 id="products-title">Products</h2>
+            <button type="button" class="btn btn-secondary add" (click)="addItem()">
+              <app-icon name="plus" [size]="16" /> Add product
+            </button>
           </div>
-          @for (item of itemForms; track item; let i = $index) {
-            <div class="line" [formGroupName]="i">
-              <div class="field">
-                <label class="sr-only" [for]="'product-' + i">Product {{ i + 1 }}</label>
-                <div class="control compact" [class.invalid]="invalid(item.controls.productId)">
-                  <select [id]="'product-' + i" formControlName="productId">
+
+          <div class="lines" formArrayName="items">
+            <div class="line head" aria-hidden="true">
+              <span>Product</span><span>Quantity</span><span class="num">Unit price</span>
+              <span class="num">Subtotal</span><span></span>
+            </div>
+            @for (item of itemForms; track item; let i = $index) {
+              <div class="line" [formGroupName]="i">
+                <div class="line-field product">
+                  <label class="sr-only" [for]="'product-' + i">Product {{ i + 1 }}</label>
+                  <select
+                    [id]="'product-' + i"
+                    formControlName="productId"
+                    [class.empty]="item.controls.productId.value === null"
+                    [attr.aria-invalid]="invalid(item.controls.productId)"
+                  >
                     <option [ngValue]="null" disabled>Select a product</option>
                     @for (product of products(); track product.id) {
                       <option [ngValue]="product.id" [disabled]="isTaken(product.id, i)">
-                        {{ product.name }} · {{ product.brand }}
+                        {{ product.name }} ({{ product.brand }})
                       </option>
                     }
                   </select>
+                  @if (lines()[i]?.product?.characteristics; as characteristics) {
+                    <span class="hint">{{ characteristics }}</span>
+                  }
                 </div>
-                @if (lines()[i]?.product?.characteristics; as characteristics) {
-                  <span class="hint">{{ characteristics }}</span>
-                }
-              </div>
-              <div class="field">
-                <label class="sr-only" [for]="'quantity-' + i">Quantity {{ i + 1 }}</label>
-                <div class="control compact" [class.invalid]="invalid(item.controls.quantity)">
-                  <input [id]="'quantity-' + i" type="number" min="1" step="1" formControlName="quantity" />
-                </div>
-              </div>
-              <span class="num"><span class="mobile-label">Unit price </span>{{ lines()[i]?.unitPrice | currency: currency }}</span>
-              <span class="num subtotal"><span class="mobile-label">Subtotal </span>{{ lines()[i]?.subtotal | currency: currency }}</span>
-              <button
-                type="button"
-                class="icon-btn danger"
-                (click)="removeItem(i)"
-                [disabled]="itemForms.length === 1"
-                [attr.aria-label]="'Remove product ' + (i + 1)"
-              >
-                <app-icon name="trash" [size]="16" />
-              </button>
-            </div>
-          }
-        </div>
-        @if (form.controls.items.touched && form.controls.items.invalid) {
-          <span class="field-error">Add at least one product, with a quantity of 1 or more.</span>
-        }
-      </section>
 
-      <footer class="form-footer">
-        <p class="total">Total <strong>{{ total() | currency: currency }}</strong></p>
-        <div class="buttons">
-          <a routerLink="/sales" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            @if (saving()) {
-              <span class="spinner" aria-hidden="true"></span> Saving…
-            } @else {
-              {{ saleId() ? 'Save changes' : 'Create sale' }}
+                <div class="stepper" [class.invalid]="invalid(item.controls.quantity)">
+                  <button
+                    type="button"
+                    class="step"
+                    (click)="changeQuantity(i, -1)"
+                    [disabled]="item.controls.quantity.value <= 1"
+                    [attr.aria-label]="'Decrease quantity of product ' + (i + 1)"
+                  >
+                    −
+                  </button>
+                  <label class="sr-only" [for]="'quantity-' + i">Quantity {{ i + 1 }}</label>
+                  <input [id]="'quantity-' + i" type="number" min="1" step="1" formControlName="quantity" />
+                  <button
+                    type="button"
+                    class="step"
+                    (click)="changeQuantity(i, 1)"
+                    [attr.aria-label]="'Increase quantity of product ' + (i + 1)"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <span class="num price"><span class="mobile-label">Unit price </span>{{ lines()[i]?.unitPrice | currency: currency }}</span>
+                <span class="num subtotal"><span class="mobile-label">Subtotal </span>{{ lines()[i]?.subtotal | currency: currency }}</span>
+                <button
+                  type="button"
+                  class="icon-btn danger remove"
+                  (click)="removeItem(i)"
+                  [disabled]="itemForms.length === 1"
+                  [attr.aria-label]="'Remove product ' + (i + 1)"
+                  title="Remove"
+                >
+                  <app-icon name="trash" [size]="16" />
+                </button>
+              </div>
             }
-          </button>
-        </div>
-      </footer>
+          </div>
+          @if (form.controls.items.touched && form.controls.items.invalid) {
+            <span class="field-error">Add at least one product, with a quantity of 1 or more.</span>
+          }
+        </section>
+      </div>
+
+      <aside class="summary" aria-labelledby="summary-title">
+        <h2 id="summary-title">Summary</h2>
+        <dl class="summary-list">
+          <div>
+            <dt>Customer</dt>
+            <dd [class.unset]="!customerName()">{{ customerName() ?? 'Not selected' }}</dd>
+          </div>
+          <div>
+            <dt>Products</dt>
+            <dd>{{ productCount() }}</dd>
+          </div>
+          <div>
+            <dt>Units</dt>
+            <dd>{{ unitCount() }}</dd>
+          </div>
+        </dl>
+        <p class="total">
+          <span>Total</span>
+          <strong>{{ total() | currency: currency }}</strong>
+        </p>
+        <button type="submit" class="btn btn-primary btn-lg btn-block" [disabled]="saving()">
+          @if (saving()) {
+            <span class="spinner" aria-hidden="true"></span> Saving…
+          } @else {
+            {{ saleId() ? 'Save changes' : 'Create sale' }}
+          }
+        </button>
+        <a [routerLink]="cancelLink()" class="cancel">Cancel</a>
+      </aside>
     </form>
   }
 </div>

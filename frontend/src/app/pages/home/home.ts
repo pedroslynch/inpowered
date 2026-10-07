@@ -8,21 +8,26 @@ import { Icon } from '../../shared/icon';
   imports: [RouterLink, Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="page">
-      <header class="page-header">
+    <section class="hero-band">
+      <div class="hero-inner">
         <div>
-          <span class="eyebrow">Dashboard</span>
           <h1>Welcome back, {{ firstName() }}</h1>
-          <p>Pick up where you left off.</p>
+          <p>Register sales, follow revenue and keep every customer's order in one place.</p>
         </div>
-      </header>
+      </div>
+    </section>
 
+    <div class="page-body">
       <div class="tiles">
-        <a routerLink="/sales" class="tile">
-          <span class="tile-icon"><app-icon name="cart" [size]="22" /></span>
+        <a routerLink="/sales" class="tile sales">
           <strong>Sales</strong>
-          <span class="muted">Create, review and update sales, their customers and products.</span>
+          <span>Review, update and delete sales, with their customers, products and totals.</span>
           <span class="go">Open sales <app-icon name="arrow-right" [size]="16" /></span>
+        </a>
+        <a routerLink="/sales/new" [queryParams]="{ from: 'home' }" class="tile new">
+          <strong>New sale</strong>
+          <span>Pick a customer and the products sold; the total is worked out for you.</span>
+          <span class="go">Register a sale <app-icon name="arrow-right" [size]="16" /></span>
         </a>
       </div>
     </div>
@@ -30,53 +35,54 @@ import { Icon } from '../../shared/icon';
   styles: `
     .tiles {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: var(--space-4);
     }
+    /* The gradients of the site's outcome cards. */
     .tile {
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
-      min-height: 200px;
-      padding: var(--space-6);
-      border-radius: var(--radius-lg);
-      background: linear-gradient(225deg, var(--card-from), var(--card-via) 55%, var(--card-to));
-      color: inherit;
-      font-size: var(--text-sm);
-      line-height: 1.55;
+      min-height: 220px;
+      padding: var(--space-8) var(--space-10);
+      border-radius: 32px;
+      color: var(--text-heading);
+      font-weight: 300;
+      line-height: 1.5;
       text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .tile:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgb(44 26 138 / 0.15);
-    }
-    .tile:focus-visible {
-      outline: none;
-      box-shadow: var(--focus-ring);
-    }
-    .tile-icon {
-      display: grid;
-      place-items: center;
-      width: 44px;
-      height: 44px;
-      margin-bottom: auto;
-      border-radius: var(--radius-pill);
-      background: var(--neutral-0);
-      color: var(--action-primary);
+      box-shadow: 0 16px 48px rgb(25 2 65 / 0.08);
+      transition: box-shadow 0.2s;
+
+      &:hover {
+        box-shadow: 0 20px 56px rgb(25 2 65 / 0.16);
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+      }
+
+      &.sales {
+        background: radial-gradient(100% 100% at 90% 8%, #7697f0 0%, #c2ddfb 40%, #def9ff 100%);
+      }
+
+      &.new {
+        background: linear-gradient(225deg, #d2d9fc 50%, #a6d9f6 100%);
+      }
     }
     strong {
-      color: var(--text-heading);
-      font-size: var(--text-xl);
-      font-weight: 500;
+      margin-top: auto;
+      font-size: 25px;
+      font-weight: 600;
+      line-height: 1.2;
     }
     .go {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-1);
-      margin-top: var(--space-2);
+      gap: var(--space-2);
+      margin-top: var(--space-3);
       color: var(--action-primary);
-      font-weight: 600;
+      font-weight: 500;
     }
   `,
 })

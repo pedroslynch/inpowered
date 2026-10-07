@@ -26,10 +26,10 @@ describe('AuthService', () => {
   it('signs in and exposes the user and token', () => {
     const auth = setup();
     let signedIn = false;
-    auth.login('admin@inpowered.ai', 'Admin@123', false).subscribe(() => (signedIn = true));
+    auth.login('fernando.sonegheti@inpowered.ai', 'Admin@123', false).subscribe(() => (signedIn = true));
 
     const request = http.expectOne('/api/auth/login');
-    expect(request.request.body).toEqual({ email: 'admin@inpowered.ai', password: 'Admin@123' });
+    expect(request.request.body).toEqual({ email: 'fernando.sonegheti@inpowered.ai', password: 'Admin@123' });
     request.flush(loginResponse(ADMIN));
 
     expect(signedIn).toBe(true);
