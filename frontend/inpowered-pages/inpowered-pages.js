@@ -38,7 +38,7 @@
       ".ip-account button { padding: 6px 14px; border: 1px solid rgb(255 255 255 / 0.4); border-radius: 999px;" +
       " background: transparent; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }" +
       ".ip-account button:hover { background: rgb(255 255 255 / 0.1); }" +
-      "@media (max-width: 1100px) { .navbar .ip-who { display: none; } }" +
+      "@media (max-width: 1100px) { .ip-account:not(.ip-mobile) .ip-who { display: none; } }" +
       ".mobile-overlay-menu--nav .ip-account { justify-content: space-between; margin: 24px 0 0; }";
 
     // One account block for the desktop navbar, one for the phone menu (shown by the burger button).
@@ -64,6 +64,7 @@
     };
     const account = makeAccount();
     const mobileAccount = makeAccount();
+    mobileAccount.classList.add("ip-mobile"); // the navbar one hides the name on narrow screens, this one never does
 
     // Gatsby re-renders the navbar, so the account is added again whenever it goes missing.
     const place = () => {
