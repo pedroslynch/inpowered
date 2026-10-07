@@ -1,0 +1,271 @@
+<header class="top">
+  <p class="announcement">inPowered AI Launches DecisioningOS with PMG</p>
+
+  <nav class="nav" aria-label="Main">
+    <a href="#top" class="brand"><img src="landing/logo.svg" alt="inPowered AI" width="150" height="31" /></a>
+
+    <ul class="nav-links">
+      <li class="optional">
+        <a href="#top"><img src="landing/decisioning-os.svg" alt="DecisioningOS" width="100" height="22" /></a>
+      </li>
+      <li class="optional">
+        <a href="#outcomes">Solutions <img src="landing/chevron.svg" alt="" width="8" height="9" /></a>
+      </li>
+      <li class="optional"><a routerLink="/about">About Us</a></li>
+      <li class="optional"><a href="#case-studies">Case Studies</a></li>
+      <li class="optional"><a href="#results">Press</a></li>
+      <li class="optional"><a routerLink="/careers">Careers</a></li>
+      <li><a routerLink="/login">Log In</a></li>
+      <li><a href="#demo" class="btn btn-primary demo-btn">Request a Demo</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" id="top">
+    <div class="hero-content">
+      <h1>
+        <span>Containerized AI Decisioning</span>
+        <span>for Outcomes</span>
+      </h1>
+      <p class="hero-lead">
+        Deliver real business outcomes from every impression with<br />
+        AI-powered PMPs for CTV, Video, and Display.
+      </p>
+
+      <figure class="diagram">
+        <img
+          src="landing/hero-diagram.svg"
+          width="810"
+          height="274"
+          alt="Data partners such as LiveRamp, Kantar, Upwave, Cint, Innovid, PlaceIQ and Adelaide feed inPowered AI Decisioning, which delivers PMP deal IDs on Index Exchange, OpenX, Magnite and PubMatic."
+        />
+        <img class="diagram-ring" src="landing/hero-ring.svg" width="203" height="203" alt="" />
+        <span class="diagram-label core" aria-hidden="true">AI Decisioning</span>
+        <span class="diagram-label deal" aria-hidden="true">PMP Deal ID</span>
+      </figure>
+
+      <a href="#demo" class="btn btn-primary hero-cta">Request a Demo</a>
+    </div>
+  </section>
+
+  <section class="agencies" aria-labelledby="agencies-title">
+    <h2 id="agencies-title">Agencies Maximizing Outcomes with AI PMPs</h2>
+    <div class="marquee">
+      <ul class="marquee-track">
+        @for (agency of agencies; track agency.src) {
+          <li>
+            <img [src]="'landing/' + agency.src + '.svg'" [alt]="agency.alt" [width]="agency.width" height="50" />
+          </li>
+        }
+        @for (agency of agencies; track agency.src) {
+          <li aria-hidden="true">
+            <img [src]="'landing/' + agency.src + '.svg'" alt="" [width]="agency.width" height="50" />
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="outcomes" id="outcomes" aria-labelledby="outcomes-title">
+    <div class="container">
+      <h2 id="outcomes-title" class="display">Proven Outcomes.<br />Powered by Sell-Side AI Decisioning.</h2>
+      <div class="outcomes-intro">
+        <p class="subtitle">Optimize for real business outcomes - at scale and in real time.</p>
+        <p>
+          From brand lift to customer value, inPowered AI’s PMP deals deliver measurable outcomes through
+          impression-level decisioning trained on data from Kantar, Cint, EDO, Innovid, PlaceIQ, Adelaide, plus your
+          own first party data.
+        </p>
+      </div>
+
+      <ul class="outcome-grid">
+        @for (outcome of outcomes; track outcome.title) {
+          <li class="outcome-card" [class]="outcome.tone">
+            <div class="outcome-partners">
+              @if (outcome.partners; as partners) {
+                <img
+                  [src]="'landing/' + partners.src + '.svg'"
+                  [alt]="partners.alt"
+                  [width]="partners.width"
+                  height="20"
+                />
+              }
+            </div>
+            <h3>{{ outcome.title }}</h3>
+            <p>{{ outcome.text }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="cases" id="case-studies" aria-labelledby="cases-title">
+    <div class="container">
+      <h2 id="cases-title">Case Studies</h2>
+      <ul class="case-grid">
+        @for (study of caseStudies; track study.image) {
+          <li class="case-card">
+            <div class="case-text">
+              <h3>
+                {{ study.title[0] }}<span class="highlight">{{ study.title[1] }}</span>{{ study.title[2] }}
+              </h3>
+              @if (study.partners; as partners) {
+                <img
+                  [src]="'landing/' + partners.src + '.svg'"
+                  [alt]="partners.alt"
+                  [width]="partners.width"
+                  height="20"
+                />
+              }
+            </div>
+            <img class="case-image" [src]="'landing/' + study.image" alt="" width="359" height="222" loading="lazy" />
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="results" id="results" aria-label="Results" #results>
+    <ul class="container stats">
+      @for (stat of stats; track stat.label; let i = $index) {
+        <li>
+          <strong>{{ statValues()[i] }}</strong>
+          <span>{{ stat.label }}</span>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="demo" id="demo" aria-labelledby="demo-title">
+    <div class="container demo-grid">
+      <div class="demo-copy">
+        <h2 id="demo-title">Ready to optimize for real brand outcomes?</h2>
+        <p>Let’s build your next brand campaign.</p>
+      </div>
+
+      @if (demoSent()) {
+        <div class="demo-sent" role="status">
+          <h3>Thanks, we got your request.</h3>
+          <p>Our team will reach out to schedule your demo.</p>
+        </div>
+      } @else {
+        <form class="demo-form" [formGroup]="demoForm" (ngSubmit)="requestDemo()" novalidate>
+          <div class="line-field">
+            <label for="demo-name">Name</label>
+            <input id="demo-name" formControlName="name" autocomplete="name" [attr.aria-invalid]="invalid('name')" />
+            @if (invalid('name')) {
+              <span class="field-error">Enter your name.</span>
+            }
+          </div>
+          <div class="line-field">
+            <label for="demo-company">Company</label>
+            <input
+              id="demo-company"
+              formControlName="company"
+              autocomplete="organization"
+              [attr.aria-invalid]="invalid('company')"
+            />
+            @if (invalid('company')) {
+              <span class="field-error">Enter your company.</span>
+            }
+          </div>
+          <div class="line-field">
+            <label for="demo-email">Work Email</label>
+            <input
+              id="demo-email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              [attr.aria-invalid]="invalid('email')"
+            />
+            @if (invalid('email')) {
+              <span class="field-error">Enter a valid work email.</span>
+            }
+          </div>
+          <div class="line-field">
+            <label for="demo-country">Country</label>
+            <select id="demo-country" formControlName="country" autocomplete="country-name">
+              @for (country of countries; track country) {
+                <option [value]="country">{{ country }}</option>
+              }
+            </select>
+          </div>
+          <div class="line-field">
+            <label for="demo-state">State</label>
+            @if (isUnitedStates()) {
+              <select id="demo-state" formControlName="state" autocomplete="address-level1">
+                @for (state of usStates; track state) {
+                  <option [value]="state">{{ state }}</option>
+                }
+              </select>
+            } @else {
+              <input id="demo-state" formControlName="state" autocomplete="address-level1" />
+            }
+          </div>
+          <div class="line-field">
+            <label for="demo-message">Message (optional)</label>
+            <textarea id="demo-message" formControlName="message" rows="3"></textarea>
+          </div>
+          <p class="recaptcha">
+            This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
+          </p>
+          <button type="submit" class="btn btn-primary demo-submit">Request Demo</button>
+        </form>
+      }
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="container footer-grid">
+    <div class="footer-about" id="about">
+      <img src="landing/logo.svg" alt="inPowered AI" width="150" height="31" />
+      <p>
+        inPowered AI is the leading sell-side AI decisioning platform. The company’s AI models run directly on the
+        exchange, enabling agencies and brands to deliver better outcomes through real-time, impression-level
+        decisioning. The company is backed by strategic investors and industry operators and is at the forefront of
+        enabling intelligence on the sell-side.
+      </p>
+    </div>
+
+    <nav class="footer-nav" aria-labelledby="footer-company">
+      <h2 id="footer-company">Company</h2>
+      <ul>
+        <li><a href="#top">DecisioningOS</a></li>
+        <li><a href="#outcomes">Solutions</a></li>
+        <li><a routerLink="/about">About Us</a></li>
+        <li><a href="#case-studies">Case Studies</a></li>
+        <li><a href="#results">Press</a></li>
+        <li><a routerLink="/careers">Careers</a></li>
+        <li><a routerLink="/login">Log In</a></li>
+        <li><a href="#demo">Request a Demo</a></li>
+      </ul>
+    </nav>
+
+    <p class="legal">
+      <span>© Copyright {{ year }} inPowered</span>
+      <span>Privacy Policy</span>
+      <span aria-hidden="true">|</span>
+      <span>Terms and Conditions</span>
+    </p>
+
+    <ul class="social" aria-label="Social media">
+      <li>
+        <a href="https://www.linkedin.com/company/inpoweredai" target="_blank" rel="noopener noreferrer">
+          <img src="landing/social-linkedin.svg" alt="inPowered AI on LinkedIn" width="16" height="16" />
+        </a>
+      </li>
+      <li>
+        <a href="https://www.instagram.com/inpoweredai" target="_blank" rel="noopener noreferrer">
+          <img src="landing/social-instagram.svg" alt="inPowered AI on Instagram" width="16" height="16" />
+        </a>
+      </li>
+      <li>
+        <a href="https://twitter.com/inpoweredai" target="_blank" rel="noopener noreferrer">
+          <img src="landing/social-x.svg" alt="inPowered AI on X" width="16" height="16" />
+        </a>
+      </li>
+    </ul>
+  </div>
+</footer>
