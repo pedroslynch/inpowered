@@ -43,20 +43,10 @@ export class SalesList {
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  /** Sales matching the search box; the figures in the hero band follow this list. */
   protected readonly filtered = computed(() => {
     const query = this.query().trim().toLowerCase();
-    if (!query) {
-      return this.sales();
-    }
-    return this.sales().filter((sale) =>
-      [
-        `#${sale.id}`,
-        sale.customer.name,
-        sale.seller.name,
-        sale.notes ?? '',
-        ...sale.items.map((item) => item.productName),
-      ].some((value) => value.toLowerCase().includes(query)),
-    );
+    return query ? this.sales().filter((sale) => matchesSearch(sale, query)) : this.sales();
   });
 
   protected readonly total = computed(() => this.filtered().reduce((sum, sale) => sum + sale.totalAmount, 0));
@@ -123,4 +113,16 @@ export class SalesList {
       },
     });
   }
+}
+
+/** The search looks at the sale number (#3), customer, seller, notes and product names. */
+function matchesSearch(sale: Sale, query: string): boolean {
+  const searchable = [
+    `#${sale.id}`,
+    sale.customer.name,
+    sale.seller.name,
+    sale.notes ?? '',
+    ...sale.items.map((item) => item.productName),
+  ];
+  return searchable.some((value) => value.toLowerCase().includes(query));
 }

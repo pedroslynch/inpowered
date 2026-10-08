@@ -1,11 +1,19 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormArray, FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, map, of, startWith } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { errorMessage, fieldErrors } from '../../core/api-error';
+import { showsError } from '../../core/forms';
 import { APP_CURRENCY, today } from '../../core/format';
 import { Customer, Product, Sale, SaleRequest, Seller } from '../../core/models';
 import { SalesService } from '../../core/sales.service';
@@ -15,6 +23,20 @@ type ItemForm = FormGroup<{
   productId: FormControl<number | null>;
   quantity: FormControl<number>;
 }>;
+
+/** Same limits as the API (SaleRequest, SaleItemRequest). */
+const MAX_QUANTITY = 100_000;
+const NOTES_MAX_LENGTH = 500;
+
+/** One product line of the form, with the figures shown next to it. */
+interface Line {
+  productId: number | null;
+  product: Product | undefined;
+  unitPrice: number;
+  /** Units counted in the totals: the typed quantity, or 0 while it is empty or not positive. */
+  units: number;
+  subtotal: number;
+}
 
 /** Create (`/sales/new`) and edit (`/sales/:id/edit`) a sale. */
 @Component({
@@ -56,31 +78,34 @@ export class SaleForm implements OnInit {
     sellerId: this.fb.control<number | null>(null),
     customerId: this.fb.control<number | null>(null, Validators.required),
     saleDate: [today(), Validators.required],
-    notes: ['', Validators.maxLength(500)],
+    notes: ['', Validators.maxLength(NOTES_MAX_LENGTH)],
     items: this.fb.array<ItemForm>([], Validators.required),
   });
 
-  private readonly items$ = this.form.controls.items.valueChanges.pipe(
-    startWith(null),
-    map(() => this.form.controls.items.getRawValue()),
+  /** Current value of every product line, updated as the user edits them. */
+  private readonly itemValues = toSignal(
+    this.form.controls.items.valueChanges.pipe(
+      startWith(null),
+      map(() => this.form.controls.items.getRawValue()),
+    ),
+    { requireSync: true },
   );
-  private readonly itemValues = toSignal(this.items$, { requireSync: true });
-
-  protected readonly lines = computed(() => {
-    const products = new Map(this.products().map((product) => [product.id, product]));
-    return this.itemValues().map(({ productId, quantity }) => {
-      const product = productId == null ? undefined : products.get(productId);
-      const unitPrice = productId == null ? 0 : (this.storedPrices.get(productId) ?? product?.price ?? 0);
-      const subtotal = unitPrice * (Number(quantity) > 0 ? Number(quantity) : 0);
-      return { product, unitPrice, subtotal };
-    });
-  });
-
-  protected readonly total = computed(() => this.lines().reduce((sum, line) => sum + line.subtotal, 0));
 
   private readonly customerId = toSignal(this.form.controls.customerId.valueChanges, {
     initialValue: this.form.controls.customerId.value,
   });
+
+  protected readonly lines = computed<Line[]>(() => {
+    const productsById = new Map(this.products().map((product) => [product.id, product]));
+    return this.itemValues().map(({ productId, quantity }) => {
+      const product = productId == null ? undefined : productsById.get(productId);
+      const unitPrice = productId == null ? 0 : (this.storedPrices.get(productId) ?? product?.price ?? 0);
+      const units = unitsOf(quantity);
+      return { productId, product, unitPrice, units, subtotal: unitPrice * units };
+    });
+  });
+
+  protected readonly total = computed(() => this.lines().reduce((sum, line) => sum + line.subtotal, 0));
 
   protected readonly customerName = computed(
     () => this.customers().find((customer) => customer.id === this.customerId())?.name ?? null,
@@ -89,7 +114,7 @@ export class SaleForm implements OnInit {
   protected readonly productCount = computed(() => this.lines().filter((line) => line.product).length);
 
   protected readonly unitCount = computed(() =>
-    this.itemValues().reduce((sum, item) => sum + (item.productId != null && Number(item.quantity) > 0 ? Number(item.quantity) : 0), 0),
+    this.lines().reduce((sum, line) => sum + (line.productId != null ? line.units : 0), 0),
   );
 
   get itemForms(): ItemForm[] {
@@ -100,36 +125,14 @@ export class SaleForm implements OnInit {
     if (this.isAdmin()) {
       this.form.controls.sellerId.addValidators(Validators.required);
     }
-    const id = this.saleId();
-    forkJoin({
-      customers: this.salesService.customers(),
-      products: this.salesService.products(),
-      sellers: this.isAdmin() ? this.salesService.sellers() : of<Seller[]>([]),
-      sale: id ? this.salesService.get(id) : of(null),
-    }).subscribe({
-      next: ({ customers, products, sellers, sale }) => {
-        this.customers.set(customers);
-        this.products.set(products);
-        this.sellers.set(sellers);
-        if (sale) {
-          this.fill(sale);
-        } else {
-          this.addItem();
-        }
-        this.loading.set(false);
-      },
-      error: (err: unknown) => {
-        this.loadError.set(errorMessage(err, 'Unable to load the sale form.'));
-        this.loading.set(false);
-      },
-    });
+    this.load();
   }
 
   protected addItem(): void {
     this.form.controls.items.push(
       this.fb.group({
         productId: this.fb.control<number | null>(null, Validators.required),
-        quantity: this.fb.control(1, [Validators.required, Validators.min(1), Validators.max(100000)]),
+        quantity: this.fb.control(1, [Validators.required, Validators.min(1), Validators.max(MAX_QUANTITY)]),
       }),
     );
   }
@@ -150,8 +153,8 @@ export class SaleForm implements OnInit {
     return this.itemValues().some((item, i) => i !== index && item.productId === productId);
   }
 
-  protected invalid(control: FormControl<unknown>): boolean {
-    return control.invalid && control.touched;
+  protected invalid(control: AbstractControl): boolean {
+    return showsError(control);
   }
 
   protected submit(): void {
@@ -159,15 +162,8 @@ export class SaleForm implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
-    const value = this.form.getRawValue();
-    const request: SaleRequest = {
-      sellerId: this.isAdmin() ? value.sellerId : null,
-      customerId: value.customerId!,
-      saleDate: value.saleDate,
-      notes: value.notes.trim() || null,
-      items: value.items.map((item) => ({ productId: item.productId!, quantity: Number(item.quantity) })),
-    };
     const id = this.saleId();
+    const request = this.toRequest();
     this.saving.set(true);
     this.saveError.set(null);
     this.saveFieldErrors.set([]);
@@ -184,7 +180,34 @@ export class SaleForm implements OnInit {
     });
   }
 
-  private fill(sale: Sale): void {
+  /** Loads the lists for the selects and, when editing, the sale itself. */
+  private load(): void {
+    const id = this.saleId();
+    forkJoin({
+      customers: this.salesService.customers(),
+      products: this.salesService.products(),
+      sellers: this.isAdmin() ? this.salesService.sellers() : of<Seller[]>([]),
+      sale: id ? this.salesService.get(id) : of(null),
+    }).subscribe({
+      next: ({ customers, products, sellers, sale }) => {
+        this.customers.set(customers);
+        this.products.set(products);
+        this.sellers.set(sellers);
+        if (sale) {
+          this.fillForm(sale);
+        } else {
+          this.addItem();
+        }
+        this.loading.set(false);
+      },
+      error: (err: unknown) => {
+        this.loadError.set(errorMessage(err, 'Unable to load the sale form.'));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  private fillForm(sale: Sale): void {
     for (const item of sale.items) {
       this.storedPrices.set(item.productId, item.unitPrice);
       this.addItem();
@@ -197,4 +220,22 @@ export class SaleForm implements OnInit {
       notes: sale.notes ?? '',
     });
   }
+
+  /** The API payload; only called once the form is valid, so every required value is set. */
+  private toRequest(): SaleRequest {
+    const value = this.form.getRawValue();
+    return {
+      sellerId: this.isAdmin() ? value.sellerId : null,
+      customerId: value.customerId!,
+      saleDate: value.saleDate,
+      notes: value.notes.trim() || null,
+      items: value.items.map((item) => ({ productId: item.productId!, quantity: Number(item.quantity) })),
+    };
+  }
+}
+
+/** A typed quantity as a number of units: 0 while it is empty or not positive. */
+function unitsOf(quantity: unknown): number {
+  const units = Number(quantity);
+  return units > 0 ? units : 0;
 }

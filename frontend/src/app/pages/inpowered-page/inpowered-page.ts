@@ -45,36 +45,19 @@ export class InpoweredPage implements OnInit {
   readonly frameTitle = input.required<string>();
 
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
 
   protected readonly url = computed(() => this.sanitizer.bypassSecurityTrustResourceUrl(this.page()));
 
   /** A copy lives at its route's URL inside its frame, so reloading the frame loads this route again. */
   protected readonly framed = window.self !== window.top;
 
-  private readonly router = inject(Router);
-  private readonly auth = inject(AuthService);
-
   constructor() {
     if (this.framed) {
       return;
     }
-    const onMessage = (event: MessageEvent) => {
-      if (event.origin === window.location.origin && event.data?.type === 'signOut') {
-        this.auth.logout();
-        return;
-      }
-      const url = event.data?.url;
-      if (event.origin !== window.location.origin || event.data?.type !== 'navigate' || !isAppPath(url)) {
-        return;
-      }
-      const [path, fragment] = url.split('#');
-      void this.router.navigateByUrl(path).then(() => {
-        if (fragment) {
-          // Wait for the landing page to render before scrolling to its section.
-          setTimeout(() => document.getElementById(fragment)?.scrollIntoView());
-        }
-      });
-    };
+    const onMessage = (event: MessageEvent) => this.handleMessage(event);
     window.addEventListener('message', onMessage);
     inject(DestroyRef).onDestroy(() => window.removeEventListener('message', onMessage));
   }
@@ -83,6 +66,30 @@ export class InpoweredPage implements OnInit {
     if (this.framed) {
       window.location.replace(this.page());
     }
+  }
+
+  /** Messages posted by the copy in the frame. Only this origin is trusted. */
+  private handleMessage(event: MessageEvent): void {
+    if (event.origin !== window.location.origin) {
+      return;
+    }
+    const message = event.data as { type?: unknown; url?: unknown } | null;
+    if (message?.type === 'signOut') {
+      this.auth.logout();
+    } else if (message?.type === 'navigate' && isAppPath(message.url)) {
+      this.openAppPath(message.url);
+    }
+  }
+
+  /** Opens an app path such as `/careers` or `/#case-studies` (a landing section). */
+  private openAppPath(url: string): void {
+    const [path, fragment] = url.split('#');
+    void this.router.navigateByUrl(path).then(() => {
+      if (fragment) {
+        // Wait for the landing page to render before scrolling to its section.
+        setTimeout(() => document.getElementById(fragment)?.scrollIntoView());
+      }
+    });
   }
 }
 

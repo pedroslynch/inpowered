@@ -3,6 +3,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { errorMessage } from '../../core/api-error';
+import { showsError } from '../../core/forms';
 import { Icon } from '../../shared/icon';
 import { Logo } from '../../shared/logo';
 
@@ -49,7 +50,6 @@ export class Login {
   }
 
   protected invalid(name: 'email' | 'password'): boolean {
-    const control = this.form.controls[name];
-    return control.invalid && control.touched;
+    return showsError(this.form.controls[name]);
   }
 }

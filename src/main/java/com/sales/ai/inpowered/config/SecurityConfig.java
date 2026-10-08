@@ -1,13 +1,8 @@
 package com.sales.ai.inpowered.config;
 
-import java.nio.charset.StandardCharsets;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,24 +10,20 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtValidators;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
-import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.sales.ai.inpowered.model.entity.Role;
+import com.sales.ai.inpowered.security.JwtClaims;
 
+/**
+ * Access rules of the API. Requests are stateless: each one carries the JWT issued at login
+ * (see {@link JwtConfig}).
+ */
 @Configuration
-@EnableConfigurationProperties(JwtProperties.class)
+@Import(JwtConfig.class)
 public class SecurityConfig {
-
-	public static final String ROLES_CLAIM = "roles";
 
 	private static final String ADMIN = Role.ADMIN.name();
 
@@ -65,31 +56,14 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 
-	@Bean
-	JwtEncoder jwtEncoder(JwtProperties properties) {
-		return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey(properties)));
-	}
-
-	@Bean
-	JwtDecoder jwtDecoder(JwtProperties properties) {
-		NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(secretKey(properties))
-			.macAlgorithm(MacAlgorithm.HS256)
-			.build();
-		decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(properties.issuer()));
-		return decoder;
-	}
-
+	/** Turns the token's roles claim into {@code ROLE_ADMIN} / {@code ROLE_SELLER} authorities. */
 	private static JwtAuthenticationConverter jwtAuthenticationConverter() {
 		JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
-		authorities.setAuthoritiesClaimName(ROLES_CLAIM);
+		authorities.setAuthoritiesClaimName(JwtClaims.ROLES);
 		authorities.setAuthorityPrefix("ROLE_");
 		JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
 		converter.setJwtGrantedAuthoritiesConverter(authorities);
 		return converter;
-	}
-
-	private static SecretKey secretKey(JwtProperties properties) {
-		return new SecretKeySpec(properties.secret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
 	}
 
 }

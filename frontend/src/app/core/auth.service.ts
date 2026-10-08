@@ -4,7 +4,12 @@ import { Router } from '@angular/router';
 import { Observable, map } from 'rxjs';
 import { LoginResponse, User } from './models';
 
+/** Storage key of the session. The inpowered.ai page copies (frontend/inpowered-pages) read it too. */
 const STORAGE_KEY = 'inpowered.session';
+
+/** localStorage keeps the session after the browser closes ("Keep me signed in"); sessionStorage, for the tab only. */
+type StorageKind = 'local' | 'session';
+const STORAGE_KINDS: readonly StorageKind[] = ['local', 'session'];
 
 interface Session {
   token: string;
@@ -76,7 +81,7 @@ function isExpired(session: Session): boolean {
   return new Date(session.expiresAt).getTime() <= Date.now();
 }
 
-function storage(kind: 'local' | 'session'): Storage | null {
+function storage(kind: StorageKind): Storage | null {
   try {
     return kind === 'local' ? window.localStorage : window.sessionStorage;
   } catch {
@@ -84,7 +89,7 @@ function storage(kind: 'local' | 'session'): Storage | null {
   }
 }
 
-function writeStorage(kind: 'local' | 'session', value: string): void {
+function writeStorage(kind: StorageKind, value: string): void {
   try {
     storage(kind)?.setItem(STORAGE_KEY, value);
   } catch {
@@ -93,7 +98,7 @@ function writeStorage(kind: 'local' | 'session', value: string): void {
 }
 
 function clearStoredSession(): void {
-  for (const kind of ['local', 'session'] as const) {
+  for (const kind of STORAGE_KINDS) {
     try {
       storage(kind)?.removeItem(STORAGE_KEY);
     } catch {
@@ -103,7 +108,7 @@ function clearStoredSession(): void {
 }
 
 function restoreSession(): Session | null {
-  for (const kind of ['local', 'session'] as const) {
+  for (const kind of STORAGE_KINDS) {
     try {
       const raw = storage(kind)?.getItem(STORAGE_KEY);
       if (raw) {

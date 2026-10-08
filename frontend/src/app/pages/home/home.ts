@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { firstName } from '../../core/format';
 import { Icon } from '../../shared/icon';
 
 @Component({
@@ -87,7 +88,7 @@ import { Icon } from '../../shared/icon';
   `,
 })
 export class Home {
-  private readonly auth = inject(AuthService);
+  private readonly user = inject(AuthService).user;
 
-  protected readonly firstName = computed(() => this.auth.user()?.fullName.split(' ')[0] ?? '');
+  protected readonly firstName = computed(() => firstName(this.user()?.fullName ?? ''));
 }

@@ -378,15 +378,6 @@ a {
   width: 100%;
   max-width: 1208px;
   margin: 0 auto;
-}
-
-.page-body {
-  width: 100%;
-  max-width: 1256px;
-  margin: 0 auto;
-}
-
-.hero-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -409,9 +400,12 @@ a {
   }
 }
 
+/* Page content, rising 72px over the hero band's lower edge. */
 .page-body {
   position: relative;
-  margin-top: -72px;
+  width: 100%;
+  max-width: 1256px;
+  margin: -72px auto 0;
   padding: 0 var(--space-6) var(--space-20);
 }
 

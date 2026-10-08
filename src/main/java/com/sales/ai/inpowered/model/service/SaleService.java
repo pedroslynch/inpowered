@@ -19,6 +19,7 @@ import com.sales.ai.inpowered.exception.NotFoundException;
 import com.sales.ai.inpowered.model.dto.SaleItemRequest;
 import com.sales.ai.inpowered.model.dto.SaleRequest;
 import com.sales.ai.inpowered.model.dto.SaleResponse;
+import com.sales.ai.inpowered.model.entity.Customer;
 import com.sales.ai.inpowered.model.entity.Product;
 import com.sales.ai.inpowered.model.entity.Sale;
 import com.sales.ai.inpowered.model.entity.SaleItem;
@@ -62,13 +63,13 @@ public class SaleService {
 
 	public SaleResponse create(SaleRequest request, AuthenticatedUser user) {
 		Sale sale = new Sale();
-		apply(sale, request, user);
+		applyRequest(sale, request, user);
 		return SaleResponse.from(sales.save(sale));
 	}
 
 	public SaleResponse update(Integer id, SaleRequest request, AuthenticatedUser user) {
 		Sale sale = findVisible(id, user);
-		apply(sale, request, user);
+		applyRequest(sale, request, user);
 		return SaleResponse.from(sales.save(sale));
 	}
 
@@ -76,6 +77,7 @@ public class SaleService {
 		sales.delete(findVisible(id, user));
 	}
 
+	/** The sale with its details, if the user may see it: administrators see all, sellers their own. */
 	private Sale findVisible(Integer id, AuthenticatedUser user) {
 		Sale sale = sales.findWithDetailsById(id).orElseThrow(() -> saleNotFound(id));
 		if (!user.isAdmin() && !sale.getSeller().getId().equals(sellerOf(user).getId())) {
@@ -85,16 +87,17 @@ public class SaleService {
 		return sale;
 	}
 
-	private void apply(Sale sale, SaleRequest request, AuthenticatedUser user) {
+	/** Copies the request onto the sale (new or existing) and recomputes its total. */
+	private void applyRequest(Sale sale, SaleRequest request, AuthenticatedUser user) {
 		sale.setSeller(resolveSeller(request, user));
-		sale.setCustomer(customers.findById(request.customerId())
-			.orElseThrow(() -> new BusinessException("Customer " + request.customerId() + " does not exist.")));
+		sale.setCustomer(findCustomer(request.customerId()));
 		sale.setSaleDate(request.saleDate());
 		sale.setNotes(blankToNull(request.notes()));
 		replaceItems(sale, request.items());
 		sale.recalculateTotal();
 	}
 
+	/** Sellers always sell for themselves; administrators choose the (active) seller. */
 	private Seller resolveSeller(SaleRequest request, AuthenticatedUser user) {
 		if (!user.isAdmin()) {
 			return sellerOf(user);
@@ -107,41 +110,62 @@ public class SaleService {
 			.orElseThrow(() -> new BusinessException("Seller " + request.sellerId() + " does not exist."));
 	}
 
+	private Customer findCustomer(Integer customerId) {
+		return customers.findById(customerId)
+			.orElseThrow(() -> new BusinessException("Customer " + customerId + " does not exist."));
+	}
+
 	/**
 	 * Replaces the sale items. Products already in the sale keep the unit price they were
 	 * sold at; new products take the current catalog price.
 	 */
 	private void replaceItems(Sale sale, List<SaleItemRequest> requested) {
-		Set<Integer> productIds = new HashSet<>();
-		for (SaleItemRequest item : requested) {
-			if (!productIds.add(item.productId())) {
-				throw new BusinessException("Each product can appear only once in a sale.");
-			}
-		}
-		Map<Integer, Product> catalog = products.findAllById(productIds)
-			.stream()
-			.collect(Collectors.toMap(Product::getId, Function.identity()));
-		if (catalog.size() != productIds.size()) {
-			throw new BusinessException("One or more products do not exist.");
-		}
-		Map<Integer, SaleItem> existing = sale.getItems()
+		Set<Integer> productIds = distinctProductIds(requested);
+		Map<Integer, Product> catalog = findProducts(productIds);
+		Map<Integer, SaleItem> currentItems = sale.getItems()
 			.stream()
 			.collect(Collectors.toMap(item -> item.getProduct().getId(), Function.identity()));
 
 		sale.getItems().removeIf(item -> !productIds.contains(item.getProduct().getId()));
 		for (SaleItemRequest requestedItem : requested) {
-			SaleItem item = existing.get(requestedItem.productId());
+			SaleItem item = currentItems.get(requestedItem.productId());
 			if (item == null) {
-				Product product = catalog.get(requestedItem.productId());
-				item = new SaleItem();
-				item.setProduct(product);
-				item.setUnitPrice(product.getPrice());
+				item = newItem(catalog.get(requestedItem.productId()));
 				sale.addItem(item);
 			}
 			item.setQuantity(requestedItem.quantity());
 		}
 	}
 
+	private static Set<Integer> distinctProductIds(List<SaleItemRequest> items) {
+		Set<Integer> productIds = new HashSet<>();
+		for (SaleItemRequest item : items) {
+			if (!productIds.add(item.productId())) {
+				throw new BusinessException("Each product can appear only once in a sale.");
+			}
+		}
+		return productIds;
+	}
+
+	/** The products with the given ids, by id; all of them must exist. */
+	private Map<Integer, Product> findProducts(Set<Integer> productIds) {
+		Map<Integer, Product> found = products.findAllById(productIds)
+			.stream()
+			.collect(Collectors.toMap(Product::getId, Function.identity()));
+		if (found.size() != productIds.size()) {
+			throw new BusinessException("One or more products do not exist.");
+		}
+		return found;
+	}
+
+	private static SaleItem newItem(Product product) {
+		SaleItem item = new SaleItem();
+		item.setProduct(product);
+		item.setUnitPrice(product.getPrice());
+		return item;
+	}
+
+	/** The active seller linked to the signed-in user. */
 	private Seller sellerOf(AuthenticatedUser user) {
 		return sellers.findByUserId(user.userId())
 			.filter(Seller::isActive)

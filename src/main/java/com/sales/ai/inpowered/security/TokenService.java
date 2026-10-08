@@ -11,9 +11,9 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import com.sales.ai.inpowered.config.JwtProperties;
-import com.sales.ai.inpowered.config.SecurityConfig;
 import com.sales.ai.inpowered.model.entity.AppUser;
 
+/** Issues the JWT returned at login; its claims are named in {@link JwtClaims}. */
 @Service
 public class TokenService {
 
@@ -34,9 +34,9 @@ public class TokenService {
 			.subject(user.getEmail())
 			.issuedAt(now)
 			.expiresAt(expiresAt)
-			.claim(AuthenticatedUser.USER_ID_CLAIM, user.getId())
-			.claim("name", user.getFullName())
-			.claim(SecurityConfig.ROLES_CLAIM, List.of(user.getRole().name()))
+			.claim(JwtClaims.USER_ID, user.getId())
+			.claim(JwtClaims.NAME, user.getFullName())
+			.claim(JwtClaims.ROLES, List.of(user.getRole().name()))
 			.build();
 		JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
 		String token = encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

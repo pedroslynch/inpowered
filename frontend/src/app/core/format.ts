@@ -1,3 +1,5 @@
+import { Role } from './models';
+
 /** Currency used to display amounts across the app. */
 export const APP_CURRENCY = 'USD';
 
@@ -16,4 +18,14 @@ export function initials(name: string): string {
     .slice(0, 2)
     .map((word) => word[0].toUpperCase())
     .join('');
+}
+
+/** First word of a person's name, e.g. "Maria Silva" → "Maria". */
+export function firstName(fullName: string): string {
+  return fullName.split(' ')[0];
+}
+
+/** How a role is shown next to the signed-in user's name. */
+export function roleLabel(role: Role | undefined): string {
+  return role === 'ADMIN' ? 'Administrator' : 'Seller';
 }

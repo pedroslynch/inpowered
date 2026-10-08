@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,13 +42,17 @@ class SaleApiIntegrationTests {
 
 	private static final String JOHN = "john.carter@inpowered.ai";
 
+	private static final String ADMIN_PASSWORD = "Admin@123";
+
+	private static final String SELLER_PASSWORD = "Seller@123";
+
 	@Autowired
 	private MockMvc mockMvc;
 
 	@Test
 	void loginReturnsTokenAndUser() throws Exception {
 		mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-			.content(credentials(ADMIN, "Admin@123")))
+			.content(credentials(ADMIN, ADMIN_PASSWORD)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.token").isNotEmpty())
 			.andExpect(jsonPath("$.user.role").value("ADMIN"));
@@ -66,7 +72,7 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void adminSeesTheThreeSampleSales() throws Exception {
-		mockMvc.perform(get("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(ADMIN, "Admin@123")))
+		mockMvc.perform(get("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(ADMIN, ADMIN_PASSWORD)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$", hasSize(3)))
 			.andExpect(jsonPath("$[2].customer.name").value("Acme Retail Ltd."))
@@ -76,7 +82,7 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void sellerSeesOnlyOwnSales() throws Exception {
-		mockMvc.perform(get("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(MARIA, "Seller@123")))
+		mockMvc.perform(get("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(MARIA, SELLER_PASSWORD)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$", hasSize(2)))
 			.andExpect(jsonPath("$[*].seller.name", everyItem(is("Maria Silva"))));
@@ -84,8 +90,8 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void sellerCannotReadAnotherSellersSale() throws Exception {
-		String john = bearer(JOHN, "Seller@123");
-		Integer mariasSale = firstSaleId(bearer(MARIA, "Seller@123"));
+		String john = bearer(JOHN, SELLER_PASSWORD);
+		Integer mariasSale = firstSaleId(bearer(MARIA, SELLER_PASSWORD));
 		mockMvc.perform(get("/api/sales/" + mariasSale).header(HttpHeaders.AUTHORIZATION, john))
 			.andExpect(status().isNotFound());
 		mockMvc.perform(delete("/api/sales/" + mariasSale).header(HttpHeaders.AUTHORIZATION, john))
@@ -94,7 +100,7 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void sellerCannotListSellers() throws Exception {
-		mockMvc.perform(get("/api/sellers").header(HttpHeaders.AUTHORIZATION, bearer(JOHN, "Seller@123")))
+		mockMvc.perform(get("/api/sellers").header(HttpHeaders.AUTHORIZATION, bearer(JOHN, SELLER_PASSWORD)))
 			.andExpect(status().isForbidden());
 	}
 
@@ -103,9 +109,9 @@ class SaleApiIntegrationTests {
 		String body = """
 				{"sellerId": %d, "customerId": %d, "saleDate": "2026-10-03",
 				 "items": [{"productId": %d, "quantity": 3}]}
-				""".formatted(firstId("/api/sellers", bearer(ADMIN, "Admin@123")),
-				firstId("/api/customers", bearer(JOHN, "Seller@123")), productId("Wireless Mouse"));
-		mockMvc.perform(post("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(JOHN, "Seller@123"))
+				""".formatted(firstId("/api/sellers", bearer(ADMIN, ADMIN_PASSWORD)),
+				firstId("/api/customers", bearer(JOHN, SELLER_PASSWORD)), productId("Wireless Mouse"));
+		mockMvc.perform(post("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(JOHN, SELLER_PASSWORD))
 			.contentType(MediaType.APPLICATION_JSON)
 			.content(body))
 			.andExpect(status().isCreated())
@@ -116,7 +122,7 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void adminUpdatesAndDeletesSale() throws Exception {
-		String admin = bearer(ADMIN, "Admin@123");
+		String admin = bearer(ADMIN, ADMIN_PASSWORD);
 		Integer saleId = firstSaleId(admin);
 		String body = """
 				{"sellerId": %d, "customerId": %d, "saleDate": "2026-10-03", "notes": "Updated",
@@ -139,7 +145,7 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void invalidSaleReportsFieldErrors() throws Exception {
-		mockMvc.perform(post("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(ADMIN, "Admin@123"))
+		mockMvc.perform(post("/api/sales").header(HttpHeaders.AUTHORIZATION, bearer(ADMIN, ADMIN_PASSWORD))
 			.contentType(MediaType.APPLICATION_JSON)
 			.content("{\"items\": []}"))
 			.andExpect(status().isBadRequest())
@@ -149,7 +155,7 @@ class SaleApiIntegrationTests {
 
 	@Test
 	void duplicatedProductIsRejected() throws Exception {
-		String admin = bearer(ADMIN, "Admin@123");
+		String admin = bearer(ADMIN, ADMIN_PASSWORD);
 		int product = productId("Laptop Pro 14");
 		String body = """
 				{"sellerId": %d, "customerId": %d, "saleDate": "2026-10-03",
@@ -187,11 +193,11 @@ class SaleApiIntegrationTests {
 
 	private int productId(String name) throws Exception {
 		String response = mockMvc
-			.perform(get("/api/products").header(HttpHeaders.AUTHORIZATION, bearer(ADMIN, "Admin@123")))
+			.perform(get("/api/products").header(HttpHeaders.AUTHORIZATION, bearer(ADMIN, ADMIN_PASSWORD)))
 			.andReturn()
 			.getResponse()
 			.getContentAsString();
-		return JsonPath.<java.util.List<Integer>>read(response, "$[?(@.name == '" + name + "')].id").get(0);
+		return JsonPath.<List<Integer>>read(response, "$[?(@.name == '" + name + "')].id").get(0);
 	}
 
 	private static String credentials(String email, String password) {
