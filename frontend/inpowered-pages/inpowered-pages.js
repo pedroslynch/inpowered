@@ -16,11 +16,12 @@
     if (key.startsWith("@@scroll|")) sessionStorage.removeItem(key);
   }
 
-  // Like the landing page menu: Solutions is a plain link (no dropdown) and there is no Press item.
+  // Like the landing page: Solutions is a plain link (no dropdown) and there is no Press item, in the menu or the footer.
   const style = document.createElement("style");
   style.textContent =
     ".solutions-item > :not(a), .mobile-solutions-toggle svg, .mobile-solutions-submenu { display: none !important; }" +
-    ".navbar .navbar-item:has(> a[href='/press']), .mobile-overlay-menu--nav a[href='/press'] { display: none !important; }";
+    ".navbar .navbar-item:has(> a[href='/press']), .mobile-overlay-menu--nav a[href='/press']," +
+    " footer div:has(> a[href='/press']) { display: none !important; }";
   document.head.appendChild(style);
 
   // Signed-in user (the app's session, same origin), shown after Request a Demo like on the landing page.
