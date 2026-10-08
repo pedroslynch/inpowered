@@ -293,6 +293,15 @@ a {
     &::placeholder {
       color: var(--text-placeholder);
     }
+
+    /* Browser autofill paints its own (lighter) background: keep the control's colors instead. */
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+      -webkit-text-fill-color: var(--text-body);
+      box-shadow: 0 0 0 1000px var(--bg-subtle) inset;
+      caret-color: var(--text-body);
+    }
   }
 
   select {
