@@ -15,4 +15,5 @@ Angular `/about` and `/careers` routes (`src/app/pages/inpowered-page`) in an if
   copy's menu links to the matching pages of this app.
 - `SecurityConfig` sends `X-Frame-Options: SAMEORIGIN` so the app can frame its own pages.
 - For a signed-in user (the app's session in local/session storage, same origin), `inpowered-pages.js` also shows the
-  user and a Sign out button after Request a Demo, like the landing page; Sign out posts `{ type: 'signOut' }` to the app.
+  user and a Sign out button after Request a Demo, like the landing page, and turns the footer's Log In into Sign out;
+  Sign out posts `{ type: 'signOut' }` to the app.

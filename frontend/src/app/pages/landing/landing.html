@@ -288,7 +288,11 @@
         <li><a routerLink="/about">About Us</a></li>
         <li><a href="#case-studies">Case Studies</a></li>
         <li><a routerLink="/careers">Careers</a></li>
-        <li><a routerLink="/login">Log In</a></li>
+        @if (user()) {
+          <li><button type="button" class="footer-sign-out" (click)="signOut()">Sign out</button></li>
+        } @else {
+          <li><a routerLink="/login">Log In</a></li>
+        }
         <li><a href="#demo">Request a Demo</a></li>
       </ul>
     </nav>

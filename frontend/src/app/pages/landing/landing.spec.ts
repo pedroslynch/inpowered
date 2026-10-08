@@ -1,5 +1,7 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 import { Landing } from './landing';
 
 // The first test compiles the large landing template, which can take longer than the 5s default.
@@ -38,6 +40,23 @@ describe('Landing', { timeout: 20_000 }, () => {
       'https://twitter.com/inpoweredai',
     ]);
     expect(social.every((a) => a.target === '_blank' && a.rel.includes('noopener'))).toBe(true);
+  });
+
+  it('shows Sign out instead of Log In in the footer for a signed-in user', async () => {
+    const logout = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: AuthService,
+          useValue: { user: signal({ fullName: 'Maria Silva', role: 'SELLER' }), logout },
+        },
+      ],
+    });
+    const { element } = await render();
+    const footer = element.querySelector('.footer-nav')!;
+    expect([...footer.querySelectorAll('a')].some((a) => a.textContent?.trim() === 'Log In')).toBe(false);
+    footer.querySelector<HTMLButtonElement>('.footer-sign-out')!.click();
+    expect(logout).toHaveBeenCalled();
   });
 
   it('shows the final stats when they cannot be animated', async () => {

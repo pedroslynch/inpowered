@@ -4,6 +4,7 @@
   const pagePath = document.currentScript.dataset.path;
   const framed = window.top !== window;
   const SESSION_KEY = "inpowered.session"; // AuthService's storage key
+  const FOOTER_LOGIN = "footer a[href^='https://app.inpwrd.com']";
 
   // Gatsby only renders a page whose URL matches the page it was built for.
   if (location.pathname !== pagePath) {
@@ -53,14 +54,7 @@
       account.querySelector(".ip-avatar").textContent = initials(user.fullName);
       account.querySelector(".ip-name").textContent = user.fullName;
       account.querySelector(".ip-role").textContent = user.role === "ADMIN" ? "Administrator" : "Seller";
-      account.querySelector("button").addEventListener("click", () => {
-        if (framed) {
-          window.parent.postMessage({ type: "signOut" }, location.origin);
-        } else {
-          clearSession();
-          location.assign("/"); // like the app: signing out opens the landing page
-        }
-      });
+      account.querySelector("button").addEventListener("click", signOut);
       return account;
     };
     const account = makeAccount();
@@ -79,6 +73,9 @@
         const demos = document.querySelectorAll(".mobile-overlay-menu--nav a.button");
         if (demos.length) demos[demos.length - 1].after(mobileAccount);
       }
+      // The footer's Log In becomes Sign out (handled by the click listener below).
+      const footerLogin = document.querySelector(FOOTER_LOGIN);
+      if (footerLogin && footerLogin.textContent !== "Sign out") footerLogin.textContent = "Sign out";
     };
     new MutationObserver(place).observe(document.documentElement, { childList: true, subtree: true });
   }
@@ -112,6 +109,13 @@
       const link = event.target.closest && event.target.closest("a[href]");
       if (!link || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return;
 
+      if (user && link.matches(FOOTER_LOGIN)) {
+        event.preventDefault();
+        event.stopPropagation();
+        signOut();
+        return;
+      }
+
       const url = new URL(link.href, location.href);
       let appPath = null;
       if (url.host === "app.inpwrd.com") {
@@ -139,6 +143,15 @@
       window.parent.postMessage({ type: "navigate", url: appPath }, location.origin);
     } else {
       location.assign(appPath);
+    }
+  }
+
+  function signOut() {
+    if (framed) {
+      window.parent.postMessage({ type: "signOut" }, location.origin);
+    } else {
+      clearSession();
+      location.assign("/"); // like the app: signing out opens the landing page
     }
   }
 
